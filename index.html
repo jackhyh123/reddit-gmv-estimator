@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reddit 帖子 GMV 预估器</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #0f1117;
+  min-height: 100vh;
+  color: #e8eaf0;
+  padding: 28px 16px;
+}
+.container { max-width: 860px; margin: 0 auto; }
+
+h1 {
+  font-size: 20px; font-weight: 700;
+  margin-bottom: 24px;
+  color: #fff;
+  display: flex; align-items: center; gap: 10px;
+}
+.reddit-logo {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: #ff4500;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+}
+
+/* 卡片 */
+.card {
+  background: #1a1d27;
+  border: 1px solid #2a2d3a;
+  border-radius: 14px;
+  padding: 22px 24px;
+  margin-bottom: 18px;
+}
+.card-title {
+  font-size: 11px; font-weight: 700;
+  color: #666; text-transform: uppercase; letter-spacing: 1px;
+  margin-bottom: 18px;
+}
+
+/* URL 输入 */
+.url-row { display: flex; gap: 10px; align-items: stretch; }
+.url-input {
+  flex: 1;
+  background: #0f1117;
+  border: 1.5px solid #2a2d3a;
+  border-radius: 10px;
+  color: #e8eaf0;
+  font-size: 14px;
+  padding: 12px 14px;
+  outline: none;
+  transition: border-color .2s;
+}
+.url-input:focus { border-color: #ff4500; }
+.url-input::placeholder { color: #444; }
+.btn-fetch {
+  background: #ff4500; color: #fff;
+  border: none; border-radius: 10px;
+  padding: 0 20px; font-size: 14px; font-weight: 600;
+  cursor: pointer; white-space: nowrap;
+  transition: background .2s;
+  display: flex; align-items: center; gap: 6px;
+}
+.btn-fetch:hover { background: #e03d00; }
+.btn-fetch:disabled { background: #444; cursor: not-allowed; }
+.btn-fetch .spinner {
+  width: 14px; height: 14px;
+  border: 2px solid rgba(255,255,255,.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  display: none;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* 帖子信息预览 */
+.post-preview {
+  display: none;
+  background: #0f1117;
+  border: 1px solid #2a2d3a;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-top: 14px;
+  font-size: 13px;
+}
+.post-preview .sub  { color: #ff4500; font-weight: 600; margin-bottom: 4px; font-size: 12px; }
+.post-preview .ptitle { color: #e8eaf0; font-weight: 600; font-size: 15px; margin-bottom: 10px; line-height: 1.4; }
+.post-meta { display: flex; gap: 20px; flex-wrap: wrap; }
+.post-meta .m { display: flex; align-items: center; gap: 5px; color: #888; }
+.post-meta .m strong { color: #e8eaf0; }
+
+/* 输入网格 */
+.input-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 14px;
+  margin-top: 4px;
+}
+.field label {
+  display: block; font-size: 12px; color: #666;
+  margin-bottom: 7px; font-weight: 500;
+}
+.field label .badge {
+  display: inline-block;
+  background: #ff4500; color: #fff;
+  font-size: 9px; padding: 1px 5px; border-radius: 3px;
+  margin-left: 5px; vertical-align: middle; font-weight: 700;
+}
+.field label .badge.manual { background: #3b82f6; }
+.field input {
+  width: 100%; padding: 10px 12px;
+  background: #0f1117;
+  border: 1.5px solid #2a2d3a;
+  border-radius: 8px;
+  color: #e8eaf0; font-size: 15px;
+  outline: none; transition: border-color .2s;
+}
+.field input:focus { border-color: #ff4500; }
+.field input.auto-filled { border-color: #ff4500; background: #1a0f08; }
+.field input.estimated   { border-color: #f59e0b; background: #1a1508; }
+.field input::placeholder { color: #333; }
+
+.hint { font-size: 11px; color: #444; margin-top: 6px; line-height: 1.4; }
+
+/* 分隔线 */
+.divider { border: none; border-top: 1px solid #2a2d3a; margin: 18px 0; }
+
+/* 按钮 */
+.btn-calc {
+  width: 100%; padding: 13px;
+  background: linear-gradient(135deg, #ff4500, #ff6d3a);
+  color: #fff; border: none; border-radius: 10px;
+  font-size: 16px; font-weight: 700;
+  cursor: pointer; transition: opacity .2s;
+  margin-top: 6px;
+}
+.btn-calc:hover { opacity: .9; }
+
+/* 结果区 */
+#result { display: none; }
+
+/* 流量估算说明 */
+.estimator-note {
+  background: #1a1508;
+  border: 1px solid #f59e0b44;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 12px;
+  color: #d97706;
+  margin-top: 12px;
+  line-height: 1.6;
+}
+
+/* 分发等级选择 */
+.f-selector {
+  display: flex; gap: 10px; flex-wrap: wrap;
+  margin-top: 4px;
+}
+.f-btn {
+  flex: 1; min-width: 100px;
+  background: #0f1117;
+  border: 1.5px solid #2a2d3a;
+  border-radius: 8px;
+  padding: 10px 8px;
+  cursor: pointer; text-align: center;
+  transition: all .15s;
+}
+.f-btn:hover { border-color: #f59e0b; }
+.f-btn.active { border-color: #f59e0b; background: #1a1508; }
+.f-btn .f-name { font-size: 13px; font-weight: 700; color: #e8eaf0; }
+.f-btn .f-val  { font-size: 11px; color: #f59e0b; margin-top: 2px; }
+.f-btn .f-desc { font-size: 10px; color: #555; margin-top: 2px; }
+
+/* 三步计算展示 */
+.calc-steps {
+  display: none;
+  background: #0f1117;
+  border: 1px solid #2a2d3a;
+  border-radius: 10px;
+  padding: 16px;
+  margin-top: 14px;
+}
+.calc-steps .cs-title {
+  font-size: 11px; font-weight: 700; color: #555;
+  text-transform: uppercase; letter-spacing: 1px;
+  margin-bottom: 12px;
+}
+.step-row {
+  display: flex; align-items: center;
+  gap: 10px; padding: 8px 0;
+  border-bottom: 1px solid #1f2230;
+  font-size: 13px;
+}
+.step-row:last-child { border-bottom: none; }
+.step-num {
+  width: 22px; height: 22px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 800; flex-shrink: 0;
+}
+.step-num.s1 { background: #ff450033; color: #ff6d3a; }
+.step-num.s2 { background: #f59e0b33; color: #f59e0b; }
+.step-num.s3 { background: #22c55e33; color: #22c55e; }
+.step-formula { color: #666; font-size: 12px; flex: 1; }
+.step-result  { font-weight: 800; color: #fff; font-size: 15px; white-space: nowrap; }
+
+/* 信号灯 */
+.signal-box {
+  display: none;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-top: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid;
+}
+.signal-box.green  { background: #052e16; border-color: #22c55e55; color: #4ade80; }
+.signal-box.yellow { background: #1a1508; border-color: #f59e0b55; color: #fbbf24; }
+.signal-box.red    { background: #2d0a0a; border-color: #ef444455; color: #f87171; }
+
+/* 指标卡 */
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+  gap: 12px;
+}
+.metric {
+  background: #0f1117;
+  border: 1px solid #2a2d3a;
+  border-radius: 10px;
+  padding: 16px 14px;
+  border-left: 3px solid #333;
+}
+.metric.c-orange { border-left-color: #f97316; }
+.metric.c-blue   { border-left-color: #3b82f6; }
+.metric.c-green  { border-left-color: #22c55e; }
+.metric.c-red    { border-left-color: #ef4444; }
+.metric.c-purple { border-left-color: #a855f7; }
+.metric.c-yellow { border-left-color: #eab308; }
+.metric .label { font-size: 11px; color: #555; margin-bottom: 7px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+.metric .value { font-size: 22px; font-weight: 800; color: #fff; }
+.metric .sub   { font-size: 11px; color: #444; margin-top: 4px; }
+
+/* 漏斗 */
+.funnel {
+  display: flex; flex-direction: column;
+  align-items: flex-start; gap: 0;
+}
+.funnel-step { width: 100%; }
+.funnel-bar {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  border-radius: 8px;
+  padding: 11px 16px;
+  min-height: 46px;
+  font-size: 13px;
+}
+.funnel-bar.b1 { background: #ff450022; border: 1px solid #ff450055; width: 100%; }
+.funnel-bar.b2 { background: #3b82f622; border: 1px solid #3b82f655; }
+.funnel-bar.b3 { background: #22c55e22; border: 1px solid #22c55e55; }
+.funnel-bar .name  { color: #aaa; font-size: 13px; }
+.funnel-bar .count { font-size: 16px; font-weight: 800; color: #fff; }
+.funnel-arrow {
+  padding: 6px 18px;
+  font-size: 11px; color: #444;
+}
+.funnel-arrow .rate { color: #f59e0b; font-weight: 700; }
+
+/* 错误 */
+.error-msg {
+  background: #1a0808; border: 1px solid #ef444444;
+  border-radius: 8px; padding: 10px 14px;
+  color: #f87171; font-size: 13px;
+  margin-top: 10px; display: none;
+}
+
+/* 历史 */
+.history-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.history-table th {
+  padding: 10px 12px; text-align: left;
+  color: #444; font-weight: 600;
+  border-bottom: 1px solid #2a2d3a;
+  white-space: nowrap;
+}
+.history-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #1f2230;
+  vertical-align: middle;
+  color: #ccc;
+}
+.history-table tr:last-child td { border-bottom: none; }
+.history-table tr:hover td { background: #1f2230; }
+.roi-tag {
+  display: inline-block; padding: 2px 8px;
+  border-radius: 20px; font-size: 11px; font-weight: 700;
+}
+.roi-pos { background: #052e16; color: #4ade80; }
+.roi-neg { background: #2d0a0a; color: #f87171; }
+.btn-del { background: none; border: none; color: #333; cursor: pointer; font-size: 16px; padding: 2px 6px; border-radius: 4px; }
+.btn-del:hover { color: #ef4444; background: #2d0a0a; }
+.empty { text-align: center; color: #333; padding: 32px; font-size: 13px; }
+
+.sub-label { font-size: 11px; color: #555; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>
+    <div class="reddit-logo">🔴</div>
+    Reddit 帖子 GMV 预估器
+  </h1>
+
+  <!-- Step 1: URL -->
+  <div class="card">
+    <div class="card-title">Step 1 — 输入帖子链接</div>
+    <div class="url-row">
+      <input class="url-input" id="postUrl"
+        placeholder="https://www.reddit.com/r/stockholmreps/comments/xxxxx/..."
+        onkeydown="if(event.key==='Enter') fetchPost()">
+      <button class="btn-fetch" id="fetchBtn" onclick="fetchPost()">
+        <div class="spinner" id="spinner"></div>
+        <span id="fetchLabel">自动获取</span>
+      </button>
+    </div>
+    <div class="error-msg" id="errorMsg"></div>
+    <div class="post-preview" id="postPreview">
+      <div class="sub" id="previewSub"></div>
+      <div class="ptitle" id="previewTitle"></div>
+      <div class="post-meta" id="previewMeta"></div>
+    </div>
+  </div>
+
+  <!-- Step 2: 数据 -->
+  <div class="card">
+    <div class="card-title">Step 2 — 互动数据 & 流量估算</div>
+
+    <!-- A: 自动抓取总量 -->
+    <div class="input-grid">
+      <div class="field">
+        <label>总点赞数 <span class="badge" id="upvotesBadge">手动</span></label>
+        <input type="number" id="upvotes" placeholder="159" min="0" oninput="estimateTraffic()">
+      </div>
+      <div class="field">
+        <label>总评论数 <span class="badge manual" id="commentsBadge">手动</span></label>
+        <input type="number" id="comments" placeholder="21" min="0" oninput="estimateTraffic()">
+      </div>
+      <div class="field">
+        <label>点赞率 R</label>
+        <input type="number" id="upvoteRatio" placeholder="98.2" min="0" max="100" step="0.1" oninput="estimateTraffic()">
+        <div class="hint">百分比，如 98.2（&lt;90% 降权，≥95% 放大）</div>
+      </div>
+      <div class="field">
+        <label>实际浏览量 <span style="color:#444;font-size:10px">（如有）</span></label>
+        <input type="number" id="actualViews" placeholder="留空则模型估算" min="0" oninput="estimateTraffic()">
+        <div class="hint">作者后台可见，填入后直接使用</div>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- B: 前2小时早期互动（精确模式） -->
+    <div style="margin-bottom:10px">
+      <span style="font-size:12px;font-weight:700;color:#f59e0b">前2小时互动</span>
+      <span style="font-size:11px;color:#555;margin-left:6px">决定80%流量 — 发帖后2小时的数据</span>
+    </div>
+    <div class="input-grid">
+      <div class="field">
+        <label>前2h 点赞数 U</label>
+        <input type="number" id="u2h" placeholder="约总量15-25%" min="0" oninput="estimateTraffic()">
+        <div class="hint">例：总159赞 → 前2h约30</div>
+      </div>
+      <div class="field">
+        <label>前2h 评论数 C</label>
+        <input type="number" id="c2h" placeholder="约总量20-30%" min="0" oninput="estimateTraffic()">
+        <div class="hint">例：总21评论 → 前2h约5</div>
+      </div>
+    </div>
+
+    <!-- C: 分发等级 F -->
+    <hr class="divider">
+    <div style="margin-bottom:10px">
+      <span style="font-size:12px;font-weight:700;color:#a855f7">分发等级 F</span>
+      <span style="font-size:11px;color:#555;margin-left:6px">根据帖子表现选择</span>
+    </div>
+    <div class="f-selector" id="fSelector">
+      <div class="f-btn" data-f="5" onclick="setF(5)">
+        <div class="f-name">普通</div>
+        <div class="f-val">F = 5</div>
+        <div class="f-desc">U&lt;20 或 R&lt;90%</div>
+      </div>
+      <div class="f-btn active" data-f="8" onclick="setF(8)">
+        <div class="f-name">不错</div>
+        <div class="f-val">F = 8</div>
+        <div class="f-desc">U≥20, R≥95%</div>
+      </div>
+      <div class="f-btn" data-f="12" onclick="setF(12)">
+        <div class="f-name">爆帖</div>
+        <div class="f-val">F = 12</div>
+        <div class="f-desc">U≥50, C≥15</div>
+      </div>
+    </div>
+
+    <!-- 三步计算展示 -->
+    <div class="calc-steps" id="calcSteps">
+      <div class="cs-title">模型计算过程</div>
+      <div class="step-row">
+        <div class="step-num s1">1</div>
+        <div class="step-formula" id="stepFormula1">S = U×50 + C×100</div>
+        <div class="step-result" id="stepResult1">—</div>
+      </div>
+      <div class="step-row">
+        <div class="step-num s2">2</div>
+        <div class="step-formula" id="stepFormula2">S₂ = S × R（质量过滤）</div>
+        <div class="step-result" id="stepResult2">—</div>
+      </div>
+      <div class="step-row">
+        <div class="step-num s3">3</div>
+        <div class="step-formula" id="stepFormula3">V = S₂ × F（分发放大）</div>
+        <div class="step-result" id="stepResult3">—</div>
+      </div>
+    </div>
+
+    <!-- 信号灯 -->
+    <div class="signal-box" id="signalBox"></div>
+
+    <!-- 最终流量 -->
+    <hr class="divider">
+    <div class="input-grid" style="margin-top:0">
+      <div class="field" style="grid-column: span 2">
+        <label>估算/实际流量 UV <span style="color:#22c55e;font-size:10px">最终使用值</span></label>
+        <input type="number" id="estimatedTraffic" placeholder="由模型自动计算" class="estimated" oninput="onTrafficManualEdit()">
+        <div class="hint">手动填入后覆盖模型估算</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 3: 预估参数 -->
+  <div class="card">
+    <div class="card-title">Step 3 — 填入经验值，预估这条帖子的 GMV</div>
+    <div class="input-grid">
+      <div class="field">
+        <label>历史转化率 (%)</label>
+        <input type="number" id="convRate" placeholder="0.05" min="0" step="0.001">
+        <div class="hint">来自过往帖子的经验值，如 0.05%（= 万人访问成交5单）</div>
+      </div>
+      <div class="field">
+        <label>客单价 (元)</label>
+        <input type="number" id="avgOrder" placeholder="402" min="0" step="0.01">
+        <div class="hint">你的商品定价或历史平均客单价</div>
+      </div>
+      <div class="field">
+        <label>发帖成本 (元)</label>
+        <input type="number" id="cost" placeholder="0" min="0" step="0.01">
+        <div class="hint">制图、写文案等投入费用</div>
+      </div>
+      <div class="field">
+        <label>毛利率 (%)</label>
+        <input type="number" id="marginRate" placeholder="留空跳过" min="0" max="100" step="0.1">
+        <div class="hint">填写后自动估算利润空间</div>
+      </div>
+    </div>
+    <button class="btn-calc" onclick="calculate()">预估这条帖子的 GMV</button>
+  </div>
+
+  <!-- 结果 -->
+  <div id="result">
+    <div class="card">
+      <div class="card-title">预估结果</div>
+      <div class="metrics" id="metrics"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">预估漏斗</div>
+      <div class="funnel" id="funnel"></div>
+    </div>
+  </div>
+
+  <!-- 历史 -->
+  <div class="card">
+    <div class="card-title">历史记录</div>
+    <div id="historyWrap">
+      <p class="empty">暂无记录</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORE_KEY = 'reddit_conv_v2';
+let trafficManualOverride = false;
+let currentF = 8;
+
+// ── Reddit URL 解析 ──
+function parseRedditUrl(url) {
+  const m = url.match(/reddit\.com\/r\/([^/]+)\/comments\/([a-z0-9]+)/i);
+  return m ? { sub: m[1], id: m[2] } : null;
+}
+
+// ── 自动抓取 ──
+async function fetchPost() {
+  const url = document.getElementById('postUrl').value.trim();
+  if (!url) { showError('请先输入帖子链接'); return; }
+
+  const parsed = parseRedditUrl(url);
+  if (!parsed) { showError('无法识别链接格式，请确认是 Reddit 帖子 URL'); return; }
+
+  setLoading(true);
+  hideError();
+
+  try {
+    const apiUrl = `https://www.reddit.com/r/${parsed.sub}/comments/${parsed.id}.json?raw_json=1&limit=1`;
+    const res = await fetch(apiUrl, {
+      headers: { 'Accept': 'application/json' }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const post = data[0].data.children[0].data;
+
+    // 填入数据
+    setField('upvotes', post.score, 'auto');
+    setField('comments', post.num_comments, 'auto');
+    setField('upvoteRatio', (post.upvote_ratio * 100).toFixed(1), 'auto');
+
+    // 预览
+    document.getElementById('previewSub').textContent = `r/${post.subreddit}`;
+    document.getElementById('previewTitle').textContent = post.title;
+    document.getElementById('previewMeta').innerHTML = `
+      <span class="m">👍 <strong>${post.score.toLocaleString()}</strong> upvotes</span>
+      <span class="m">💬 <strong>${post.num_comments}</strong> comments</span>
+      <span class="m">📊 <strong>${(post.upvote_ratio*100).toFixed(1)}%</strong> upvote ratio</span>
+      <span class="m">🕐 <strong>${new Date(post.created_utc*1000).toLocaleDateString('zh-CN')}</strong></span>
+    `;
+    document.getElementById('postPreview').style.display = 'block';
+    // 自动预填前2h估算值（总量×20% / 25%）
+    const est2hU = Math.round(post.score * 0.20);
+    const est2hC = Math.round(post.num_comments * 0.25);
+    document.getElementById('u2h').placeholder = `建议填 ${est2hU}（总量20%）`;
+    document.getElementById('c2h').placeholder = `建议填 ${est2hC}（总量25%）`;
+    trafficManualOverride = false;
+    estimateTraffic();
+  } catch(e) {
+    showError(`自动获取失败（${e.message}），请手动填写下方点赞数和评论数`);
+    document.getElementById('postPreview').style.display = 'none';
+  } finally {
+    setLoading(false);
+  }
+}
+
+function setField(id, val, type) {
+  const el = document.getElementById(id);
+  el.value = val;
+  el.className = type === 'auto' ? 'auto-filled' : '';
+  const badge = document.getElementById(id + 'Badge');
+  if (badge) {
+    badge.textContent = type === 'auto' ? '已抓取' : '手动';
+    badge.className   = type === 'auto' ? 'badge' : 'badge manual';
+  }
+}
+
+function setLoading(on) {
+  document.getElementById('spinner').style.display = on ? 'block' : 'none';
+  document.getElementById('fetchLabel').textContent = on ? '获取中...' : '自动获取';
+  document.getElementById('fetchBtn').disabled = on;
+}
+function showError(msg) {
+  const el = document.getElementById('errorMsg');
+  el.textContent = msg; el.style.display = 'block';
+}
+function hideError() { document.getElementById('errorMsg').style.display = 'none'; }
+
+// ── 分发等级选择 ──
+function setF(f) {
+  currentF = f;
+  document.querySelectorAll('.f-btn').forEach(btn => {
+    btn.classList.toggle('active', parseInt(btn.dataset.f) === f);
+  });
+  estimateTraffic();
+}
+
+// ── 三步流量模型 ──
+// Step 1: S  = U×50 + C×100
+// Step 2: S₂ = S × R  (R = upvote ratio 0~1)
+// Step 3: V  = S₂ × F (F = 分发倍数)
+function estimateTraffic() {
+  if (trafficManualOverride) return;
+
+  // 优先用实际浏览量
+  const actual = parseFloat(document.getElementById('actualViews').value);
+  if (actual > 0) {
+    document.getElementById('estimatedTraffic').value = actual;
+    document.getElementById('estimatedTraffic').className = 'auto-filled';
+    document.getElementById('calcSteps').style.display = 'none';
+    document.getElementById('signalBox').style.display = 'none';
+    return;
+  }
+
+  // 读取前2h数据（优先），回退到总量×20%
+  const totalU = parseFloat(document.getElementById('upvotes').value) || 0;
+  const totalC = parseFloat(document.getElementById('comments').value) || 0;
+  let U = parseFloat(document.getElementById('u2h').value);
+  let C = parseFloat(document.getElementById('c2h').value);
+  const usingEstimated2h = isNaN(U) || isNaN(C);
+  if (usingEstimated2h) {
+    U = totalU * 0.20;
+    C = totalC * 0.25;
+  }
+
+  const ratioRaw = parseFloat(document.getElementById('upvoteRatio').value);
+  const R = !isNaN(ratioRaw) ? ratioRaw / 100 : 0.95; // 默认0.95
+
+  if (U <= 0 && C <= 0) {
+    document.getElementById('calcSteps').style.display = 'none';
+    document.getElementById('signalBox').style.display = 'none';
+    return;
+  }
+
+  const S  = Math.round(U * 50 + C * 100);
+  const S2 = Math.round(S * R);
+  const V  = Math.round(S2 * currentF);
+
+  // 更新展示
+  document.getElementById('calcSteps').style.display = 'block';
+  const uLabel = usingEstimated2h ? `${U.toFixed(1)}(估)` : U;
+  const cLabel = usingEstimated2h ? `${C.toFixed(1)}(估)` : C;
+  document.getElementById('stepFormula1').textContent = `S = ${uLabel}×50 + ${cLabel}×100`;
+  document.getElementById('stepResult1').textContent  = S.toLocaleString();
+  document.getElementById('stepFormula2').textContent = `S₂ = ${S.toLocaleString()} × ${(R*100).toFixed(1)}%`;
+  document.getElementById('stepResult2').textContent  = S2.toLocaleString();
+  document.getElementById('stepFormula3').textContent = `V = ${S2.toLocaleString()} × F(${currentF})`;
+  document.getElementById('stepResult3').textContent  = V.toLocaleString() + ' UV';
+
+  // 信号灯
+  const sigBox = document.getElementById('signalBox');
+  sigBox.style.display = 'block';
+  const u2hVal = usingEstimated2h ? U : parseFloat(document.getElementById('u2h').value);
+  const c2hVal = usingEstimated2h ? C : parseFloat(document.getElementById('c2h').value);
+  if (u2hVal >= 20 && c2hVal >= 5 && R >= 0.95) {
+    sigBox.className = 'signal-box green';
+    sigBox.textContent = '绿灯 — 前2h达标（U≥20, C≥5, R≥95%），预计破万流量';
+  } else if (u2hVal >= 10 || c2hVal >= 3) {
+    sigBox.className = 'signal-box yellow';
+    sigBox.textContent = '黄灯 — 互动一般，流量有限，可尝试评论区引导互动';
+  } else {
+    sigBox.className = 'signal-box red';
+    sigBox.textContent = '红灯 — 早期互动不足，建议检查发帖时间或标题';
+  }
+
+  document.getElementById('estimatedTraffic').value = V;
+  document.getElementById('estimatedTraffic').className = 'estimated';
+}
+
+function onTrafficManualEdit() {
+  trafficManualOverride = true;
+  document.getElementById('estimatedTraffic').className = '';
+}
+
+// ── 计算 ──
+function calculate() {
+  const traffic    = parseFloat(document.getElementById('estimatedTraffic').value);
+  const convRate   = parseFloat(document.getElementById('convRate').value);
+  const avgOrder   = parseFloat(document.getElementById('avgOrder').value);
+  const cost       = parseFloat(document.getElementById('cost').value) || 0;
+  const marginRate = parseFloat(document.getElementById('marginRate').value);
+
+  if (!traffic || !convRate || !avgOrder) {
+    alert('请填写：估算流量、转化率、客单价');
+    return;
+  }
+
+  const orders  = traffic * (convRate / 100);
+  const gmv     = orders * avgOrder;
+  const grossProfit = !isNaN(marginRate) ? gmv * (marginRate / 100) : null;
+  const profit  = grossProfit !== null ? grossProfit - cost : gmv - cost;
+  const roi     = cost > 0 ? (profit / cost * 100) : null;
+  const revenuePerUV = gmv / traffic;
+  const costPerOrder = orders > 0 ? cost / orders : 0;
+
+  document.getElementById('result').style.display = 'block';
+
+  // 指标
+  document.getElementById('metrics').innerHTML = `
+    <div class="metric c-orange">
+      <div class="label">估算流量</div>
+      <div class="value">${fmtN(traffic, 0)}</div>
+      <div class="sub">UV · 模型估算</div>
+    </div>
+    <div class="metric c-yellow">
+      <div class="label">历史转化率</div>
+      <div class="value">${fmt(convRate, 4)}%</div>
+      <div class="sub">经验值 · 你来填</div>
+    </div>
+    <div class="metric c-blue">
+      <div class="label">预估订单</div>
+      <div class="value">${fmt(orders, 1)}</div>
+      <div class="sub">笔</div>
+    </div>
+    <div class="metric c-blue">
+      <div class="label">预估 GMV</div>
+      <div class="value">¥${fmtN(gmv)}</div>
+      <div class="sub">客单价 ¥${fmtN(avgOrder)}</div>
+    </div>
+    <div class="metric c-red">
+      <div class="label">发帖成本</div>
+      <div class="value">¥${fmtN(cost)}</div>
+      <div class="sub">每单摊 ¥${fmtN(costPerOrder)}</div>
+    </div>
+    <div class="metric ${profit >= 0 ? 'c-green' : 'c-red'}">
+      <div class="label">预估利润空间</div>
+      <div class="value">¥${fmtN(profit)}</div>
+      <div class="sub">${grossProfit !== null ? '毛利率 ' + fmt(marginRate, 1) + '%' : 'GMV - 成本'}</div>
+    </div>
+    ${roi !== null ? `<div class="metric c-purple">
+      <div class="label">ROI</div>
+      <div class="value">${fmt(roi, 1)}%</div>
+      <div class="sub">利润 / 成本</div>
+    </div>` : ''}
+    <div class="metric c-orange">
+      <div class="label">每UV产出</div>
+      <div class="value">¥${fmt(revenuePerUV, 4)}</div>
+      <div class="sub">GMV / UV</div>
+    </div>
+  `;
+
+  // 漏斗
+  const steps = [
+    { name: '帖子流量', count: traffic, unit: 'UV', cls: 'b1' },
+    { name: '预估下单', count: orders,  unit: '单', cls: 'b2' },
+    { name: '预估GMV',  count: null,    unit: '',   cls: 'b3', label: '¥' + fmtN(gmv) },
+  ];
+  let html = '';
+  for (let i = 0; i < steps.length; i++) {
+    const s = steps[i];
+    const pct = i === 0 ? 100 : Math.max((s.count !== null ? s.count : orders) / steps[0].count * 100, 5);
+    html += `<div class="funnel-step">
+      <div class="funnel-bar ${s.cls}" style="width:${pct.toFixed(1)}%;min-width:240px">
+        <span class="name">${s.name}</span>
+        <span class="count">${s.label || (fmtN(s.count, s.unit === '单' ? 1 : 0) + ' ' + s.unit)}</span>
+      </div>`;
+    if (i < steps.length - 1) {
+      const rate = (steps[i+1].count / steps[i].count * 100);
+      html += `<div class="funnel-arrow">↓ 转化 <span class="rate">${fmt(rate, 4)}%</span></div>`;
+    }
+    html += '</div>';
+  }
+  document.getElementById('funnel').innerHTML = html;
+
+  // 保存历史
+  const title = document.getElementById('previewTitle').textContent || document.getElementById('postUrl').value.trim() || '未命名';
+  const sub   = document.getElementById('previewSub').textContent || '';
+  const upvotes = document.getElementById('upvotes').value;
+  const comments = document.getElementById('comments').value;
+  const records = getRecords();
+  records.unshift({
+    id: Date.now(), title, sub,
+    traffic, upvotes, comments, convRate, avgOrder,
+    orders, gmv, cost, profit, roi,
+    ts: new Date().toLocaleString('zh-CN')
+  });
+  saveRecords(records);
+  renderHistory();
+  document.getElementById('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── 历史 ──
+function getRecords() { try { return JSON.parse(localStorage.getItem(STORE_KEY)) || []; } catch { return []; } }
+function saveRecords(r) { localStorage.setItem(STORE_KEY, JSON.stringify(r)); }
+
+function renderHistory() {
+  const records = getRecords();
+  const wrap = document.getElementById('historyWrap');
+  if (!records.length) { wrap.innerHTML = '<p class="empty">暂无记录</p>'; return; }
+
+  let html = `<table class="history-table"><thead><tr>
+    <th>帖子</th><th>估算流量</th><th>点赞</th><th>历史转化率</th>
+    <th>预估订单</th><th>预估GMV</th><th>发帖成本</th><th>预估利润</th><th>ROI</th><th></th>
+  </tr></thead><tbody>`;
+
+  for (const r of records) {
+    const roiTag = r.roi != null
+      ? `<span class="roi-tag ${r.roi >= 0 ? 'roi-pos' : 'roi-neg'}">${fmt(r.roi, 1)}%</span>`
+      : '—';
+    html += `<tr>
+      <td>
+        <div style="color:#e8eaf0;font-weight:600;font-size:12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.title}">${r.title}</div>
+        <div class="sub-label">${r.sub} · ${r.ts}</div>
+      </td>
+      <td>${Number(r.traffic).toLocaleString()}</td>
+      <td>${r.upvotes || '—'}</td>
+      <td>${fmt(r.convRate, 4)}%</td>
+      <td>${fmt(r.orders, 1)}</td>
+      <td style="color:#60a5fa">¥${fmtN(r.gmv)}</td>
+      <td>¥${fmtN(r.cost)}</td>
+      <td style="color:${r.profit >= 0 ? '#4ade80' : '#f87171'}">¥${fmtN(r.profit)}</td>
+      <td>${roiTag}</td>
+      <td><button class="btn-del" onclick="delRecord(${r.id})">×</button></td>
+    </tr>`;
+  }
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+function delRecord(id) {
+  saveRecords(getRecords().filter(r => r.id !== id));
+  renderHistory();
+}
+
+function fmt(n, dec = 2) {
+  if (n == null || isNaN(n)) return '—';
+  return Number(n).toFixed(dec);
+}
+function fmtN(n, dec = 0) {
+  if (n == null || isNaN(n)) return '—';
+  return Number(n).toLocaleString('zh-CN', { minimumFractionDigits: dec, maximumFractionDigits: dec > 0 ? dec : 2 });
+}
+
+window.onload = () => {
+  // 预填示例（图片中的数据）
+  document.getElementById('postUrl').value = 'https://www.reddit.com/r/stockholmreps/comments/example/mini_loro_piana_haul_review/';
+  renderHistory();
+};
+</script>
+</body>
+</html>
