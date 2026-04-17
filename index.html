@@ -3,38 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Reddit GMV 预估器</title>
+<title>Reddit 帖子商业价值评估</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: #0f1117;
-  min-height: 100vh;
-  color: #e8eaf0;
-  padding: 32px 16px;
+  background: #0f1117; min-height: 100vh; color: #e8eaf0; padding: 28px 16px;
 }
-.wrap { max-width: 720px; margin: 0 auto; }
+.wrap { max-width: 680px; margin: 0 auto; }
 
-/* 标题 */
-.hd { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
-.logo {
-  width: 36px; height: 36px; border-radius: 50%;
-  background: #ff4500;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 20px; flex-shrink: 0;
-}
-.hd h1 { font-size: 20px; font-weight: 800; color: #fff; }
-.hd p  { font-size: 12px; color: #555; margin-top: 2px; }
+/* 顶栏 */
+.hd { display: flex; align-items: center; gap: 10px; margin-bottom: 22px; }
+.logo { width: 30px; height: 30px; border-radius: 50%; background: #ff4500; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.hd h1 { font-size: 17px; font-weight: 800; color: #fff; }
+.hd p  { font-size: 11px; color: #444; margin-top: 1px; }
 
 /* 卡片 */
-.card {
-  background: #1a1d27; border: 1px solid #252836;
-  border-radius: 14px; padding: 20px 22px; margin-bottom: 14px;
-}
-.card-label {
-  font-size: 11px; font-weight: 700; color: #555;
-  text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px;
-}
+.card { background: #1a1d27; border: 1px solid #252836; border-radius: 14px; padding: 18px 20px; margin-bottom: 12px; }
+.section-title { font-size: 11px; font-weight: 700; color: #444; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; }
 
 /* URL */
 .url-row { display: flex; gap: 8px; }
@@ -44,168 +30,188 @@ body {
   outline: none; transition: border-color .15s;
 }
 .url-input:focus { border-color: #ff4500; }
-.url-input::placeholder { color: #333; }
+.url-input::placeholder { color: #2a2d3a; }
 .btn-fetch {
   background: #ff4500; color: #fff; border: none; border-radius: 9px;
   padding: 0 18px; font-size: 13px; font-weight: 700; cursor: pointer;
-  display: flex; align-items: center; gap: 6px; transition: background .15s; white-space: nowrap;
+  display: flex; align-items: center; gap: 6px; white-space: nowrap; transition: background .15s;
 }
 .btn-fetch:hover { background: #e03d00; }
 .btn-fetch:disabled { background: #2a2d3a; color: #555; cursor: not-allowed; }
-.spinner {
-  width: 13px; height: 13px;
-  border: 2px solid rgba(255,255,255,.25); border-top-color: #fff;
-  border-radius: 50%; animation: spin .6s linear infinite; display: none;
-}
+.spinner { width: 12px; height: 12px; border: 2px solid rgba(255,255,255,.2); border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite; display: none; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* 帖子预览 */
-.post-preview {
-  display: none; background: #0f1117; border: 1px solid #252836;
-  border-radius: 9px; padding: 12px 14px; margin-top: 12px;
-}
-.preview-sub   { font-size: 11px; color: #ff4500; font-weight: 700; margin-bottom: 3px; }
-.preview-title { font-size: 14px; font-weight: 700; color: #e8eaf0; margin-bottom: 8px; line-height: 1.4; }
-.preview-meta  { display: flex; gap: 16px; flex-wrap: wrap; }
+.post-preview { display: none; background: #0f1117; border: 1px solid #252836; border-radius: 9px; padding: 11px 13px; margin-top: 11px; }
+.preview-sub { font-size: 11px; color: #ff4500; font-weight: 700; margin-bottom: 2px; }
+.preview-title { font-size: 13px; font-weight: 700; color: #e8eaf0; line-height: 1.4; margin-bottom: 8px; }
+.preview-meta { display: flex; gap: 14px; flex-wrap: wrap; }
 .preview-meta span { font-size: 12px; color: #555; }
-.preview-meta strong { color: #ccc; }
+.preview-meta strong { color: #bbb; }
 
-/* 输入网格 */
-.input-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
-.field label {
-  display: flex; align-items: center; gap: 5px;
-  font-size: 12px; color: #555; font-weight: 600; margin-bottom: 7px;
-}
-.dot { width: 6px; height: 6px; border-radius: 50%; background: #ff4500; display: none; flex-shrink: 0; }
+hr { border: none; border-top: 1px solid #1f2230; margin: 14px 0; }
+
+/* 3列输入 */
+.input-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.field label { font-size: 11px; color: #555; font-weight: 700; display: flex; align-items: center; gap: 5px; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
+.fdot { width: 6px; height: 6px; border-radius: 50%; background: #ff4500; display: none; flex-shrink: 0; }
 input[type=number] {
-  width: 100%; padding: 10px 11px;
-  background: #0f1117; border: 1.5px solid #252836;
-  border-radius: 8px; color: #e8eaf0; font-size: 15px;
-  outline: none; transition: border-color .15s;
-  -moz-appearance: textfield;
+  width: 100%; padding: 9px 11px; background: #0f1117; border: 1.5px solid #252836;
+  border-radius: 8px; color: #e8eaf0; font-size: 15px; outline: none;
+  transition: border-color .15s; -moz-appearance: textfield;
 }
 input[type=number]::-webkit-inner-spin-button { display: none; }
 input[type=number]:focus { border-color: #ff4500; }
 input[type=number].fetched { border-color: #ff450055; background: #1a0f08; }
 input[type=number]::placeholder { color: #2a2d3a; font-size: 13px; }
-.hint-text { font-size: 11px; color: #444; margin-top: 5px; line-height: 1.5; }
 
-/* 错误 */
-.err {
-  display: none; margin-top: 10px;
-  background: #1a0808; border: 1px solid #ef444433;
-  border-radius: 8px; padding: 9px 13px; font-size: 12px; color: #f87171;
+.err { display: none; margin-top: 10px; background: #1a0808; border: 1px solid #ef444433; border-radius: 8px; padding: 9px 12px; font-size: 12px; color: #f87171; }
+
+/* 转化率预设 */
+.rate-presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+.preset-btn {
+  padding: 10px 8px; background: #0f1117; border: 1.5px solid #252836;
+  border-radius: 9px; color: #888; cursor: pointer; text-align: center;
+  transition: all .15s; font-size: 12px; line-height: 1.4;
 }
+.preset-btn:hover { border-color: #ff450055; color: #ccc; }
+.preset-btn.active { border-color: #ff4500; background: #1a0f08; color: #fff; }
+.preset-btn .p-label { font-weight: 700; font-size: 13px; display: block; }
+.preset-btn .p-val   { font-size: 11px; color: #666; }
+.preset-btn.active .p-val { color: #ff4500; }
+.rate-custom-row { display: flex; align-items: center; gap: 10px; }
+.rate-custom-row label { font-size: 11px; color: #444; white-space: nowrap; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+.rate-custom-row input { flex: 1; }
 
-hr { border: none; border-top: 1px solid #1f2230; margin: 16px 0; }
-
-/* 主按钮 */
+/* 客单价 + 按钮 */
+.bottom-row { display: grid; grid-template-columns: 1fr 2fr; gap: 10px; align-items: end; margin-top: 12px; }
 .btn-main {
-  width: 100%; padding: 14px;
-  background: linear-gradient(135deg, #ff4500 0%, #ff6d3a 100%);
-  color: #fff; border: none; border-radius: 10px;
-  font-size: 15px; font-weight: 800; cursor: pointer; transition: opacity .15s;
+  padding: 13px; background: linear-gradient(135deg, #ff4500, #ff6d3a);
+  color: #fff; border: none; border-radius: 10px; font-size: 15px;
+  font-weight: 800; cursor: pointer; transition: opacity .15s; width: 100%;
 }
 .btn-main:hover { opacity: .9; }
 
-/* 信号灯 */
-.signal {
-  display: none; border-radius: 9px; padding: 10px 15px;
-  font-size: 13px; font-weight: 600; border: 1px solid; margin-bottom: 14px;
-}
-.signal.green  { background: #071c10; border-color: #22c55e44; color: #4ade80; }
-.signal.yellow { background: #1a150a; border-color: #f59e0b44; color: #fbbf24; }
-.signal.red    { background: #1a0a0a; border-color: #ef444444; color: #f87171; }
-
-/* ── 结果区 ── */
+/* ═══════════════════════ 结果区 ═══════════════════════ */
 #result { display: none; }
 
-/* 流量条 */
-.uv-bar {
-  background: #0f1117; border: 1px solid #252836; border-radius: 10px;
-  padding: 14px 16px; margin-bottom: 14px;
-  display: flex; align-items: center; justify-content: space-between;
+/* 决策卡 — 核心 Hero */
+.verdict-card {
+  border-radius: 14px; padding: 22px 22px 18px; margin-bottom: 12px;
+  border: 2px solid;
 }
-.uv-bar .uv-label { font-size: 12px; color: #555; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
-.uv-bar .uv-value { font-size: 22px; font-weight: 900; color: #ff4500; }
-.uv-bar .uv-sub   { font-size: 11px; color: #444; margin-top: 3px; }
+.verdict-card.green  { background: #071c10; border-color: #22c55e55; }
+.verdict-card.yellow { background: #1a1408; border-color: #f59e0b55; }
+.verdict-card.red    { background: #170808; border-color: #ef444455; }
 
-/* D3/D5/D15/D30 时间轴 */
-.timeline {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  margin-bottom: 14px;
+.verdict-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.verdict-badge {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 6px 14px; border-radius: 20px; font-weight: 800; font-size: 14px;
 }
-.stage-card {
-  background: #0f1117; border: 1px solid #252836;
-  border-radius: 12px; padding: 16px 12px;
-  text-align: center; position: relative; overflow: hidden;
+.green  .verdict-badge { background: #14532d; color: #4ade80; }
+.yellow .verdict-badge { background: #3b1f05; color: #fbbf24; }
+.red    .verdict-badge { background: #3b0a0a; color: #f87171; }
+.score-ring {
+  width: 52px; height: 52px; border-radius: 50%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 900; border: 3px solid;
+  flex-shrink: 0;
 }
-.stage-card::before {
-  content: ''; position: absolute; bottom: 0; left: 0;
-  width: 100%; background: #ff450015;
-  transition: height .6s cubic-bezier(.4,0,.2,1);
+.green  .score-ring { border-color: #22c55e; color: #4ade80; }
+.yellow .score-ring { border-color: #f59e0b; color: #fbbf24; }
+.red    .score-ring { border-color: #ef4444; color: #f87171; }
+.score-ring .score-label { font-size: 9px; font-weight: 600; color: #555; }
+
+/* Hero GMV */
+.hero-gmv { text-align: center; margin-bottom: 16px; }
+.hero-gmv .hg-label { font-size: 11px; color: #555; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+.hero-gmv .hg-value { font-size: 52px; font-weight: 900; line-height: 1; letter-spacing: -2px; }
+.green  .hg-value { color: #4ade80; }
+.yellow .hg-value { color: #fbbf24; }
+.red    .hg-value { color: #f87171; }
+.hero-gmv .hg-sub { font-size: 13px; color: #555; margin-top: 6px; }
+
+/* 行动建议 */
+.action-box {
+  border-radius: 9px; padding: 12px 14px; font-size: 13px; line-height: 1.6;
 }
-.stage-card .s-day   { font-size: 11px; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
-.stage-card .s-gmv   { font-size: 20px; font-weight: 900; color: #4ade80; line-height: 1; margin-bottom: 4px; }
-.stage-card .s-order { font-size: 12px; color: #888; margin-bottom: 6px; }
-.stage-card .s-pct   { font-size: 11px; color: #444; }
-.stage-card .s-bar   {
-  height: 4px; border-radius: 2px; background: #1f2230;
-  margin-top: 10px; overflow: hidden;
-}
-.stage-card .s-bar-fill {
-  height: 100%; border-radius: 2px; background: linear-gradient(90deg, #ff4500, #4ade80);
-  transition: width .8s cubic-bezier(.4,0,.2,1);
-  width: 0;
-}
-/* GMV 趋势折线（简单CSS） */
-.trend-wrap { margin-bottom: 14px; }
-.trend-label {
-  font-size: 11px; color: #555; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 1px; margin-bottom: 10px;
-}
-.trend-svg { width: 100%; height: 80px; }
+.green  .action-box { background: #0d2b1a; color: #86efac; }
+.yellow .action-box { background: #271d08; color: #fcd34d; }
+.red    .action-box { background: #220f0f; color: #fca5a5; }
+.action-box strong { display: block; font-size: 12px; font-weight: 700; margin-bottom: 4px; opacity: .7; text-transform: uppercase; letter-spacing: .5px; }
+
+/* 二级数字条 */
+.metrics-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+.metric-pill { background: #0f1117; border: 1px solid #252836; border-radius: 9px; padding: 12px 10px; text-align: center; }
+.metric-pill .mp-label { font-size: 10px; color: #444; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 5px; }
+.metric-pill .mp-value { font-size: 18px; font-weight: 800; color: #ccc; }
+.metric-pill .mp-sub   { font-size: 10px; color: #333; margin-top: 3px; }
+
+/* 时间线 */
+.timeline-card { background: #1a1d27; border: 1px solid #252836; border-radius: 14px; padding: 16px 18px; margin-bottom: 12px; }
+.tl-phase { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; padding: 3px 8px; border-radius: 4px; display: inline-block; margin-bottom: 10px; }
+.tl-phase.burst { background: #2d1106; color: #ff6d3a; }
+.tl-phase.tail  { background: #071426; color: #60a5fa; }
+
+.tl-stages { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+.tl-stage { background: #0f1117; border: 1px solid #252836; border-radius: 10px; padding: 12px 8px; text-align: center; position: relative; }
+.tl-stage.burst-stage { border-color: #ff450033; }
+.tl-stage.tail-stage  { border-color: #3b82f633; }
+.tl-stage .ts-day   { font-size: 10px; font-weight: 700; color: #444; margin-bottom: 6px; }
+.tl-stage .ts-gmv   { font-size: 16px; font-weight: 900; margin-bottom: 3px; }
+.tl-stage .ts-ord   { font-size: 11px; color: #555; margin-bottom: 6px; }
+.tl-stage .ts-bar   { height: 3px; background: #1f2230; border-radius: 2px; overflow: hidden; }
+.tl-stage .ts-fill  { height: 100%; border-radius: 2px; transition: width 1s cubic-bezier(.4,0,.2,1); width: 0; }
+.burst-stage .ts-gmv { color: #fb923c; }
+.burst-stage .ts-fill{ background: linear-gradient(90deg, #ff4500, #fb923c); }
+.tail-stage  .ts-gmv { color: #60a5fa; }
+.tail-stage  .ts-fill{ background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+.tl-stage:nth-child(4) .ts-gmv  { color: #4ade80; }
+.tl-stage:nth-child(4) .ts-fill { background: linear-gradient(90deg, #22c55e, #4ade80); }
+
+/* 行动指南条 */
+.action-guide { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.ag-item { background: #0f1117; border-radius: 8px; padding: 10px 12px; border-left: 3px solid; }
+.ag-item.burst-guide { border-color: #ff4500; }
+.ag-item.tail-guide  { border-color: #3b82f6; }
+.ag-item .ag-phase { font-size: 10px; font-weight: 700; color: #555; text-transform: uppercase; margin-bottom: 4px; }
+.ag-item .ag-burst { color: #fb923c; }
+.ag-item .ag-tail  { color: #60a5fa; }
+.ag-item p { font-size: 12px; color: #888; line-height: 1.5; }
+
+/* 分数拆解 */
+.score-breakdown { background: #0f1117; border: 1px solid #252836; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
+.sb-row { display: flex; align-items: center; gap: 10px; padding: 5px 0; border-bottom: 1px solid #1a1d27; }
+.sb-row:last-child { border-bottom: none; }
+.sb-label { font-size: 12px; color: #666; width: 120px; flex-shrink: 0; }
+.sb-bar-wrap { flex: 1; height: 5px; background: #1f2230; border-radius: 3px; overflow: hidden; }
+.sb-bar-fill { height: 100%; border-radius: 3px; transition: width 1s ease; }
+.sb-val { font-size: 12px; font-weight: 700; color: #ccc; width: 45px; text-align: right; flex-shrink: 0; }
 
 /* 展开详情 */
-.detail-toggle {
-  background: none; border: none; color: #444; font-size: 12px;
-  cursor: pointer; text-decoration: underline; margin: 4px auto 12px;
-  display: flex; align-items: center; gap: 4px; padding: 0;
-}
+.detail-toggle { background: none; border: none; color: #444; font-size: 12px; cursor: pointer; text-decoration: underline; display: flex; align-items: center; gap: 4px; padding: 0; margin: 0 auto 10px; }
 .detail-toggle:hover { color: #888; }
-.detail-box {
-  display: none; background: #0f1117; border: 1px solid #1f2230;
-  border-radius: 9px; padding: 14px; margin-bottom: 14px; font-size: 12px;
-}
-.detail-row {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 5px 0; border-bottom: 1px solid #1a1d27; color: #555;
-}
+.detail-box { display: none; background: #0f1117; border: 1px solid #1f2230; border-radius: 9px; padding: 12px; margin-bottom: 12px; font-size: 12px; }
+.detail-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #1a1d27; color: #555; }
 .detail-row:last-child { border-bottom: none; }
 .detail-row .dv { color: #bbb; font-weight: 700; }
 
 /* 历史 */
+.hist-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.hist-header .section-title { margin-bottom: 0; }
+.hist-count { font-size: 11px; color: #444; }
 .hist-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-.hist-table th {
-  padding: 9px 10px; text-align: left; color: #444; font-weight: 700;
-  border-bottom: 1px solid #1f2230; white-space: nowrap;
-}
-.hist-table td { padding: 9px 10px; border-bottom: 1px solid #161820; color: #888; vertical-align: middle; }
+.hist-table th { padding: 8px 10px; text-align: left; color: #444; font-weight: 700; border-bottom: 1px solid #1f2230; white-space: nowrap; }
+.hist-table td { padding: 8px 10px; border-bottom: 1px solid #161820; color: #888; vertical-align: middle; }
 .hist-table tr:last-child td { border-bottom: none; }
 .hist-table tr:hover td { background: #1a1d27; }
-.hist-gmv { color: #4ade80; font-weight: 700; }
-.btn-del { background: none; border: none; color: #2a2d3a; cursor: pointer; font-size: 15px; padding: 2px 5px; border-radius: 4px; }
+.pct-badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px; }
+.pct-badge.top { background: #14532d; color: #4ade80; }
+.pct-badge.mid { background: #3b1f05; color: #fbbf24; }
+.pct-badge.low { background: #3b0a0a; color: #f87171; }
+.btn-del { background: none; border: none; color: #2a2d3a; cursor: pointer; font-size: 14px; padding: 2px 5px; border-radius: 4px; }
 .btn-del:hover { color: #ef4444; background: #1a0808; }
-.empty { text-align: center; color: #333; padding: 28px; font-size: 13px; }
-
-/* 数据来源标注 */
-.calibration-note {
-  background: #071c10; border: 1px solid #22c55e33;
-  border-radius: 8px; padding: 10px 14px; margin-bottom: 14px;
-  font-size: 12px; color: #4ade8088; line-height: 1.6;
-}
+.empty { text-align: center; color: #333; padding: 24px; font-size: 13px; }
 </style>
 </head>
 <body>
@@ -214,21 +220,18 @@ hr { border: none; border-top: 1px solid #1f2230; margin: 16px 0; }
   <div class="hd">
     <div class="logo">🔴</div>
     <div>
-      <h1>Reddit GMV 预估器</h1>
-      <p>输入帖子链接 → 预测 D3 / D5 / D15 / D30 GMV</p>
+      <h1>Reddit 帖子商业价值评估</h1>
+      <p>帖子链接 → 评分 + 决策 + D3/D5/D15/D30 GMV 预测</p>
     </div>
   </div>
 
-  <!-- Step 1 帖子 -->
+  <!-- 输入 -->
   <div class="card">
-    <div class="card-label">帖子链接</div>
+    <div class="section-title">帖子链接</div>
     <div class="url-row">
-      <input class="url-input" id="url"
-        placeholder="https://www.reddit.com/r/stockholmreps/comments/..."
-        onkeydown="if(event.key==='Enter') fetchPost()">
+      <input class="url-input" id="url" placeholder="粘贴 Reddit 帖子链接..." onkeydown="if(event.key==='Enter') fetchPost()">
       <button class="btn-fetch" id="fetchBtn" onclick="fetchPost()">
-        <div class="spinner" id="spinner"></div>
-        <span id="fetchLabel">获取</span>
+        <div class="spinner" id="spinner"></div><span id="fetchLabel">获取</span>
       </button>
     </div>
     <div class="err" id="err"></div>
@@ -240,150 +243,197 @@ hr { border: none; border-top: 1px solid #1f2230; margin: 16px 0; }
     <hr>
     <div class="input-row">
       <div class="field">
-        <label><span class="dot" id="dot-u"></span>点赞数</label>
+        <label><span class="fdot" id="dot-u"></span>点赞</label>
         <input type="number" id="upvotes" placeholder="171" min="0" oninput="onDataChange()">
       </div>
       <div class="field">
-        <label><span class="dot" id="dot-c"></span>评论数</label>
+        <label><span class="fdot" id="dot-c"></span>评论</label>
         <input type="number" id="comments" placeholder="25" min="0" oninput="onDataChange()">
       </div>
       <div class="field">
-        <label><span class="dot" id="dot-r"></span>点赞率 %</label>
+        <label><span class="fdot" id="dot-r"></span>点赞率 %</label>
         <input type="number" id="ratio" placeholder="98" min="0" max="100" step="0.1" oninput="onDataChange()">
       </div>
     </div>
   </div>
 
-  <!-- Step 2 参数 -->
+  <!-- 参数 -->
   <div class="card">
-    <div class="card-label">转化参数</div>
-    <div class="input-row">
-      <div class="field">
-        <label>历史转化率 %</label>
-        <input type="number" id="convRate" value="0.390" min="0" step="0.001">
-        <div class="hint-text">实测值 0.390%<br>（101单 / 25,929 UV）</div>
-      </div>
+    <div class="section-title">转化参数</div>
+    <div class="rate-presets" id="presets">
+      <button class="preset-btn" onclick="setPreset(0.2, this)">
+        <span class="p-label">保守</span>
+        <span class="p-val">0.20% · 新帖参考</span>
+      </button>
+      <button class="preset-btn active" onclick="setPreset(0.39, this)">
+        <span class="p-label">推荐 ✓</span>
+        <span class="p-val">0.39% · 实测基准</span>
+      </button>
+      <button class="preset-btn" onclick="setPreset(0.8, this)">
+        <span class="p-label">激进</span>
+        <span class="p-val">0.80% · 强互动帖</span>
+      </button>
+    </div>
+    <div class="rate-custom-row">
+      <label>自定义转化率 %</label>
+      <input type="number" id="convRate" value="0.39" min="0" step="0.01" style="max-width:120px" oninput="clearPreset()">
+    </div>
+    <div class="bottom-row">
       <div class="field">
         <label>客单价（元）</label>
         <input type="number" id="avgOrder" placeholder="240" min="0" step="1">
-        <div class="hint-text">实测混合均价 ≈ ¥234<br>（knit ¥220 / polo ¥260）</div>
       </div>
-      <div class="field" style="display:flex;flex-direction:column;justify-content:flex-end">
-        <button class="btn-main" onclick="calculate()">预测 GMV →</button>
-      </div>
+      <button class="btn-main" onclick="calculate()">评估这条帖子 →</button>
     </div>
   </div>
 
-  <!-- 信号灯 -->
-  <div class="signal" id="signal"></div>
-
-  <!-- 结果 -->
+  <!-- ══ 结果区 ══ -->
   <div id="result">
 
-    <div class="calibration-note" id="calibNote"></div>
-
-    <!-- 估算流量 -->
-    <div class="uv-bar">
-      <div>
-        <div class="uv-label">估算流量</div>
-        <div class="uv-sub" id="uv-sub">单帖 UV</div>
+    <!-- Hero 决策卡 -->
+    <div class="verdict-card" id="verdictCard">
+      <div class="verdict-top">
+        <div class="verdict-badge" id="verdictBadge">—</div>
+        <div class="score-ring" id="scoreRing">
+          <span id="scoreVal">—</span>
+          <span class="score-label">/ 100</span>
+        </div>
       </div>
-      <div style="text-align:right">
-        <div class="uv-value" id="r-uv">—</div>
-        <div class="uv-sub" id="uv-formula">模型估算</div>
+      <div class="hero-gmv">
+        <div class="hg-label">D30 预估 GMV</div>
+        <div class="hg-value" id="heroGmv">—</div>
+        <div class="hg-sub" id="heroSub">—</div>
+      </div>
+      <div class="action-box" id="actionBox">—</div>
+    </div>
+
+    <!-- 二级数字 -->
+    <div class="metrics-row">
+      <div class="metric-pill">
+        <div class="mp-label">估算流量</div>
+        <div class="mp-value" id="m-uv">—</div>
+        <div class="mp-sub">UV</div>
+      </div>
+      <div class="metric-pill">
+        <div class="mp-label">预估订单</div>
+        <div class="mp-value" id="m-ord">—</div>
+        <div class="mp-sub">笔（D30）</div>
+      </div>
+      <div class="metric-pill">
+        <div class="mp-label">商业评分</div>
+        <div class="mp-value" id="m-score">—</div>
+        <div class="mp-sub">/ 100</div>
       </div>
     </div>
 
-    <!-- D3/D5/D15/D30 时间轴 -->
-    <div class="card" style="padding:16px 20px">
-      <div class="card-label">GMV 增长时间线</div>
+    <!-- 评分拆解 -->
+    <div class="score-breakdown" id="scoreBreakdown">
+      <div class="sb-row">
+        <span class="sb-label">流量潜力</span>
+        <div class="sb-bar-wrap"><div class="sb-bar-fill" id="sb1" style="background:#ff4500;width:0"></div></div>
+        <span class="sb-val" id="sbv1">—</span>
+      </div>
+      <div class="sb-row">
+        <span class="sb-label">互动质量</span>
+        <div class="sb-bar-wrap"><div class="sb-bar-fill" id="sb2" style="background:#f59e0b;width:0"></div></div>
+        <span class="sb-val" id="sbv2">—</span>
+      </div>
+      <div class="sb-row">
+        <span class="sb-label">评论深度</span>
+        <div class="sb-bar-wrap"><div class="sb-bar-fill" id="sb3" style="background:#3b82f6;width:0"></div></div>
+        <span class="sb-val" id="sbv3">—</span>
+      </div>
+    </div>
 
-      <!-- 进度条可视化 -->
-      <div style="margin-bottom:18px">
-        <div style="display:flex;justify-content:space-between;font-size:11px;color:#444;margin-bottom:6px">
-          <span>D1</span><span>D5</span><span>D15</span><span>D30</span>
+    <!-- GMV 时间线 -->
+    <div class="timeline-card">
+      <div class="section-title" style="margin-bottom:10px">GMV 增长时间线</div>
+
+      <div class="tl-stages" id="tlStages">
+        <div class="tl-stage burst-stage">
+          <div class="ts-day">🔥 D3 爆发期</div>
+          <div class="ts-gmv" id="tg3">—</div>
+          <div class="ts-ord" id="to3">—</div>
+          <div class="ts-bar"><div class="ts-fill" id="tf3"></div></div>
         </div>
-        <div style="height:8px;background:#1f2230;border-radius:4px;position:relative;overflow:visible">
-          <div id="prog-bar" style="height:100%;border-radius:4px;background:linear-gradient(90deg,#ff4500,#4ade80);width:0;transition:width 1s ease"></div>
-          <div id="prog-d3"  style="position:absolute;top:-3px;width:14px;height:14px;border-radius:50%;background:#ff4500;border:2px solid #0f1117;transform:translateX(-50%);transition:left 1s ease;left:0"></div>
-          <div id="prog-d5"  style="position:absolute;top:-3px;width:14px;height:14px;border-radius:50%;background:#f59e0b;border:2px solid #0f1117;transform:translateX(-50%);transition:left 1s ease;left:0"></div>
-          <div id="prog-d15" style="position:absolute;top:-3px;width:14px;height:14px;border-radius:50%;background:#3b82f6;border:2px solid #0f1117;transform:translateX(-50%);transition:left 1s ease;left:0"></div>
-          <div id="prog-d30" style="position:absolute;top:-3px;width:14px;height:14px;border-radius:50%;background:#4ade80;border:2px solid #0f1117;transform:translateX(-50%);transition:left 1s ease;left:0"></div>
+        <div class="tl-stage burst-stage">
+          <div class="ts-day">🔥 D5 爆发期</div>
+          <div class="ts-gmv" id="tg5">—</div>
+          <div class="ts-ord" id="to5">—</div>
+          <div class="ts-bar"><div class="ts-fill" id="tf5"></div></div>
+        </div>
+        <div class="tl-stage tail-stage">
+          <div class="ts-day">📉 D15 长尾</div>
+          <div class="ts-gmv" id="tg15">—</div>
+          <div class="ts-ord" id="to15">—</div>
+          <div class="ts-bar"><div class="ts-fill" id="tf15"></div></div>
+        </div>
+        <div class="tl-stage tail-stage" style="border-color:#22c55e33">
+          <div class="ts-day">✅ D30 基准</div>
+          <div class="ts-gmv" id="tg30">—</div>
+          <div class="ts-ord" id="to30">—</div>
+          <div class="ts-bar"><div class="ts-fill" id="tf30" style="background:linear-gradient(90deg,#22c55e,#4ade80)"></div></div>
         </div>
       </div>
 
-      <!-- 4格卡片 -->
-      <div class="timeline">
-        <div class="stage-card" id="card-d3">
-          <div class="s-day">📅 D3</div>
-          <div class="s-gmv" id="gmv-d3" style="color:#ff4500">—</div>
-          <div class="s-order" id="ord-d3">—</div>
-          <div class="s-pct" id="pct-d3">9.8% of D30</div>
-          <div class="s-bar"><div class="s-bar-fill" id="bar-d3" style="width:9.8%"></div></div>
+      <div class="action-guide">
+        <div class="ag-item burst-guide">
+          <div class="ag-phase ag-burst">🔥 爆发期行动（D1–D5）</div>
+          <p id="burstAction">立刻在评论区置顶产品链接，趁热度最高期抓转化</p>
         </div>
-        <div class="stage-card" id="card-d5">
-          <div class="s-day">📅 D5</div>
-          <div class="s-gmv" id="gmv-d5" style="color:#f59e0b">—</div>
-          <div class="s-order" id="ord-d5">—</div>
-          <div class="s-pct" id="pct-d5">28.7% of D30</div>
-          <div class="s-bar"><div class="s-bar-fill" id="bar-d5" style="width:28.7%"></div></div>
-        </div>
-        <div class="stage-card" id="card-d15">
-          <div class="s-day">📅 D15</div>
-          <div class="s-gmv" id="gmv-d15" style="color:#3b82f6">—</div>
-          <div class="s-order" id="ord-d15">—</div>
-          <div class="s-pct" id="pct-d15">58.8% of D30</div>
-          <div class="s-bar"><div class="s-bar-fill" id="bar-d15" style="width:58.8%"></div></div>
-        </div>
-        <div class="stage-card" id="card-d30">
-          <div class="s-day">📅 D30</div>
-          <div class="s-gmv" id="gmv-d30" style="color:#4ade80">—</div>
-          <div class="s-order" id="ord-d30">—</div>
-          <div class="s-pct">100% · 参考基准</div>
-          <div class="s-bar"><div class="s-bar-fill" id="bar-d30" style="width:100%"></div></div>
+        <div class="ag-item tail-guide">
+          <div class="ag-phase ag-tail">📉 长尾期行动（D6–D30）</div>
+          <p>回复用户问题引导购买，定期补充买家真实反馈图</p>
         </div>
       </div>
     </div>
 
-    <!-- 展开计算 -->
+    <!-- 计算详情 -->
     <button class="detail-toggle" onclick="toggleDetail()">展开计算过程 ▾</button>
     <div class="detail-box" id="detailBox">
-      <div class="detail-row"><span>前2h 估算点赞 (U×20%)</span><span class="dv" id="d1">—</span></div>
-      <div class="detail-row"><span>前2h 估算评论 (C×25%)</span><span class="dv" id="d2">—</span></div>
-      <div class="detail-row"><span>互动初始分 S = U2h×50 + C2h×100</span><span class="dv" id="d3c">—</span></div>
-      <div class="detail-row"><span>质量过滤 S₂ = S × 点赞率</span><span class="dv" id="d4">—</span></div>
-      <div class="detail-row"><span>分发倍数 F（自动判断）</span><span class="dv" id="d5c">—</span></div>
-      <div class="detail-row"><span>估算流量 V = S₂ × F</span><span class="dv" id="d6">—</span></div>
-      <div class="detail-row"><span>D30 预估订单 = V × 转化率</span><span class="dv" id="d7">—</span></div>
-      <div class="detail-row"><span>D30 预估 GMV = 订单 × 客单价</span><span class="dv" id="d8">—</span></div>
+      <div class="detail-row"><span>前2h 估算点赞 U×20%</span><span class="dv" id="d1">—</span></div>
+      <div class="detail-row"><span>前2h 估算评论 C×25%</span><span class="dv" id="d2">—</span></div>
+      <div class="detail-row"><span>互动初始分 S</span><span class="dv" id="d3c">—</span></div>
+      <div class="detail-row"><span>质量过滤 S₂ = S×点赞率</span><span class="dv" id="d4">—</span></div>
+      <div class="detail-row"><span>分发倍数 F</span><span class="dv" id="d5c">—</span></div>
+      <div class="detail-row"><span>估算总流量 V</span><span class="dv" id="d6">—</span></div>
+      <div class="detail-row"><span>D30 预估订单</span><span class="dv" id="d7">—</span></div>
     </div>
 
   </div><!-- /result -->
 
   <!-- 历史 -->
   <div class="card">
-    <div class="card-label">历史记录</div>
-    <div id="histWrap"><p class="empty">暂无记录</p></div>
+    <div class="hist-header">
+      <div class="section-title">历史记录</div>
+      <div class="hist-count" id="histCount"></div>
+    </div>
+    <div id="histWrap"><p class="empty">暂无记录，评估第一条帖子后自动保存</p></div>
   </div>
 
-</div><!-- /wrap -->
+</div>
 
 <script>
-// ── 衰减模型（来自真实数据校准）──
-// 实测：101单, ¥23,598, 30天
-// D3=9.8%  D5=28.7%  D15=58.8%  D30=100%
+// ── 衰减模型（真实数据校准）──
 const DECAY = { 3: 0.098, 5: 0.287, 15: 0.588, 30: 1.0 };
-
-const KEY = 'reddit_gmv_v4';
+const KEY = 'reddit_gmv_v5';
 let detailOpen = false;
 
-// ── URL 解析 ──
+// ── 转化率预设 ──
+function setPreset(val, btn) {
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('convRate').value = val;
+}
+function clearPreset() {
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+}
+
+// ── Reddit 抓取 ──
 function parseUrl(url) {
   const m = url.match(/reddit\.com\/r\/([^/]+)\/comments\/([a-z0-9]+)/i);
   return m ? { sub: m[1], id: m[2] } : null;
 }
-
-// ── 自动抓取 ──
 async function fetchPost() {
   const url = document.getElementById('url').value.trim();
   if (!url) return;
@@ -391,10 +441,7 @@ async function fetchPost() {
   if (!p) { showErr('无法识别链接，请确认是 Reddit 帖子 URL'); return; }
   setLoading(true); hideErr();
   try {
-    const res = await fetch(
-      `https://www.reddit.com/r/${p.sub}/comments/${p.id}.json?raw_json=1`,
-      { headers: { Accept: 'application/json' } }
-    );
+    const res = await fetch(`https://www.reddit.com/r/${p.sub}/comments/${p.id}.json?raw_json=1`, { headers: { Accept: 'application/json' }});
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     const post = data[0].data.children[0].data;
@@ -412,135 +459,156 @@ async function fetchPost() {
     document.getElementById('preview').style.display = 'block';
     onDataChange();
   } catch(e) {
-    showErr('自动获取失败，请手动填写点赞数、评论数、点赞率');
+    showErr('自动获取失败，请手动填写下方互动数据');
   } finally { setLoading(false); }
 }
-
 function setFetched(id, val) {
-  const el = document.getElementById(id);
-  el.value = val; el.className = 'fetched';
-  document.getElementById('dot-' + (id==='upvotes'?'u':id==='comments'?'c':'r')).style.display = 'inline-block';
+  const el = document.getElementById(id); el.value = val; el.className = 'fetched';
+  const dotMap = { upvotes: 'u', comments: 'c', ratio: 'r' };
+  document.getElementById('dot-' + dotMap[id]).style.display = 'inline-block';
 }
 function setLoading(on) {
   document.getElementById('spinner').style.display = on ? 'block' : 'none';
   document.getElementById('fetchLabel').textContent = on ? '...' : '获取';
   document.getElementById('fetchBtn').disabled = on;
 }
-function showErr(msg) { const e = document.getElementById('err'); e.textContent = msg; e.style.display = 'block'; }
-function hideErr()    { document.getElementById('err').style.display = 'none'; }
+function showErr(m) { const e = document.getElementById('err'); e.textContent = m; e.style.display = 'block'; }
+function hideErr()  { document.getElementById('err').style.display = 'none'; }
+function onDataChange() {} // 实时触发可扩展
 
-// ── 信号灯 ──
-function onDataChange() {
-  const U = +document.getElementById('upvotes').value  || 0;
-  const C = +document.getElementById('comments').value || 0;
-  const R = +document.getElementById('ratio').value    || 95;
-  const sig = document.getElementById('signal');
-  const u2h = U * 0.20, c2h = C * 0.25;
-  if (!U) { sig.style.display = 'none'; return; }
-  if (u2h >= 20 && c2h >= 5 && R >= 95) {
-    sig.className = 'signal green';
-    sig.innerHTML = '🟢 <strong>绿灯</strong> — 强互动，预计可破万UV，参考同类帖 D5 GMV 约占30天总量的 29%';
-  } else if (u2h >= 8 || c2h >= 2) {
-    sig.className = 'signal yellow';
-    sig.innerHTML = '🟡 <strong>黄灯</strong> — 互动中等，建议在评论区补充产品链接引导转化';
-  } else {
-    sig.className = 'signal red';
-    sig.innerHTML = '🔴 <strong>红灯</strong> — 互动偏弱，前2小时是关键，建议检查发帖时间（UTC 14:00-20:00效果最佳）';
-  }
-  sig.style.display = 'block';
+// ── 评分模型 ──
+function calcScore(V, R, U, C) {
+  // 流量潜力：满分40，参考帖 V≈26K → 40分
+  const s1 = Math.min(40, Math.round(V / 650));
+  // 互动质量：满分35，点赞率100% → 35分
+  const s2 = Math.round((R / 100) * 35);
+  // 评论深度：满分25，C/U≥0.15 → 满分
+  const ratio = U > 0 ? C / U : 0;
+  const s3 = Math.min(25, Math.round((ratio / 0.15) * 25));
+  return { total: s1 + s2 + s3, s1, s2, s3 };
 }
 
-// ── 流量模型 ──
-function autoF(u2h, c2h) {
-  if (u2h >= 40 && c2h >= 12) return 12; // 爆帖
-  if (u2h >= 20)               return 8;  // 不错
-  return 5;                               // 普通
+// ── 决策逻辑 ──
+function getVerdict(score, U, C, R) {
+  const u2h = U * 0.20, c2h = C * 0.25;
+  if (score >= 68) {
+    return {
+      level: 'green',
+      badge: '🟢 值得投',
+      action: `<strong>建议行动</strong>D1–D5 是爆发黄金窗口 — 立刻在评论区置顶产品链接 + 补充买家实拍图，预计 D5 可收割约 29% GMV`,
+      burst: '爆发力强，D1–D5 立刻挂链接 + 补真实买家图'
+    };
+  }
+  if (score >= 42) {
+    const weak = R < 95 ? '点赞率偏低（内容需优化）' : '评论互动不足（缺乏社交证明）';
+    return {
+      level: 'yellow',
+      badge: '🟡 可优化',
+      action: `<strong>弱项</strong>${weak} — 建议评论区主动回复问题 + 挂产品链接，可提升转化 2–3 倍`,
+      burst: '互动一般，评论区主动补社交证明（买家图+尺码反馈）'
+    };
+  }
+  return {
+    level: 'red',
+    badge: '🔴 暂不建议',
+    action: `<strong>问题</strong>互动数据偏弱，自然流量有限 — 建议优化帖子标题 / 更换发帖时段（UTC 14:00–20:00 效果最佳）后重发`,
+    burst: '互动太弱，优先提升内容或更换发帖时间'
+  };
 }
 
 // ── 主计算 ──
 function calculate() {
   const U        = +document.getElementById('upvotes').value;
   const C        = +document.getElementById('comments').value;
-  const R        = (+document.getElementById('ratio').value || 95) / 100;
+  const R        = (+document.getElementById('ratio').value || 95);
   const convRate = +document.getElementById('convRate').value;
   const avgOrder = +document.getElementById('avgOrder').value;
 
   if (!U && !C)  { alert('请填写点赞数或评论数'); return; }
-  if (!convRate) { alert('请填写历史转化率'); return; }
+  if (!convRate) { alert('请填写转化率'); return; }
   if (!avgOrder) { alert('请填写客单价'); return; }
 
-  // 流量估算
   const u2h = U * 0.20, c2h = C * 0.25;
-  const F   = autoF(u2h, c2h);
+  const F   = u2h >= 40 && c2h >= 12 ? 12 : u2h >= 20 ? 8 : 5;
   const S   = Math.round(u2h * 50 + c2h * 100);
-  const S2  = Math.round(S * R);
+  const S2  = Math.round(S * R / 100);
   const V   = Math.round(S2 * F);
-
-  // D30 基准
   const orders30 = V * convRate / 100;
   const gmv30    = orders30 * avgOrder;
 
-  // 各阶段
-  const stages = [
-    { d: 3,  decay: DECAY[3],  id: 'd3',  color: '#ff4500' },
-    { d: 5,  decay: DECAY[5],  id: 'd5',  color: '#f59e0b' },
-    { d: 15, decay: DECAY[15], id: 'd15', color: '#3b82f6' },
-    { d: 30, decay: DECAY[30], id: 'd30', color: '#4ade80' },
-  ];
+  // 评分
+  const { total: score, s1, s2, s3 } = calcScore(V, R, U, C);
+  const verdict = getVerdict(score, U, C, R);
 
+  // 历史百分位
+  const recs = load();
+  const allGmv = recs.map(r => r.gmv30).filter(Boolean);
+  const pct = allGmv.length
+    ? Math.round(allGmv.filter(g => g < gmv30).length / allGmv.length * 100)
+    : null;
+
+  // ── 渲染 ──
   document.getElementById('result').style.display = 'block';
-  document.getElementById('r-uv').textContent     = V.toLocaleString() + ' UV';
-  document.getElementById('uv-formula').textContent = `S₂(${S2.toLocaleString()}) × F(${F})`;
-  document.getElementById('uv-sub').textContent   = `点赞${U} × 评论${C} → 互动分${S.toLocaleString()}`;
 
-  // 校准说明
-  document.getElementById('calibNote').innerHTML =
-    `✅ <strong>数据已用真实帖子校准</strong>：2026-03-18 三帖合计 25,929 UV → 101单 → ¥23,598 GMV（30天）` +
-    `&emsp;|&emsp;综合转化率 <strong>0.390%</strong>&emsp;|&emsp;衰减曲线：D3=9.8%  D5=28.7%  D15=58.8%  D30=100%`;
+  // 决策卡
+  const vc = document.getElementById('verdictCard');
+  vc.className = `verdict-card ${verdict.level}`;
+  document.getElementById('verdictBadge').textContent = verdict.badge;
+  document.getElementById('scoreVal').textContent     = score;
+  document.getElementById('heroGmv').textContent      = '¥' + Math.round(gmv30).toLocaleString();
+  document.getElementById('heroSub').innerHTML =
+    `≈ ${orders30.toFixed(1)} 单 · 客单价 ¥${avgOrder}` +
+    (pct !== null ? `&emsp;|&emsp;<span style="color:#4ade80">超过历史 ${pct}% 帖子</span>` : '');
+  document.getElementById('actionBox').innerHTML = verdict.action;
 
-  // 渲染时间卡
+  // 二级数字
+  document.getElementById('m-uv').textContent    = V.toLocaleString();
+  document.getElementById('m-ord').textContent   = orders30.toFixed(1);
+  document.getElementById('m-score').textContent = score;
+
+  // 评分拆解
+  setTimeout(() => {
+    document.getElementById('sb1').style.width = (s1 / 40 * 100) + '%';
+    document.getElementById('sb2').style.width = (s2 / 35 * 100) + '%';
+    document.getElementById('sb3').style.width = (s3 / 25 * 100) + '%';
+    document.getElementById('sbv1').textContent = s1 + ' / 40';
+    document.getElementById('sbv2').textContent = s2 + ' / 35';
+    document.getElementById('sbv3').textContent = s3 + ' / 25';
+  }, 100);
+
+  // 时间线
+  const stages = [
+    { d: 3, decay: DECAY[3],  gmvId: 'tg3',  ordId: 'to3',  fillId: 'tf3'  },
+    { d: 5, decay: DECAY[5],  gmvId: 'tg5',  ordId: 'to5',  fillId: 'tf5'  },
+    { d: 15,decay: DECAY[15], gmvId: 'tg15', ordId: 'to15', fillId: 'tf15' },
+    { d: 30,decay: DECAY[30], gmvId: 'tg30', ordId: 'to30', fillId: 'tf30' },
+  ];
   stages.forEach(s => {
     const g = Math.round(gmv30 * s.decay);
     const o = (orders30 * s.decay).toFixed(1);
-    document.getElementById(`gmv-${s.id}`).textContent   = '¥' + g.toLocaleString();
-    document.getElementById(`ord-${s.id}`).textContent   = `≈ ${o} 单`;
-    // 进度条
-    const bar = document.getElementById(`bar-${s.id}`);
-    if (bar) {
-      setTimeout(() => { bar.style.width = (s.decay * 100) + '%'; }, 100);
-    }
+    document.getElementById(s.gmvId).textContent = '¥' + g.toLocaleString();
+    document.getElementById(s.ordId).textContent = `≈${o}单`;
+    setTimeout(() => { document.getElementById(s.fillId).style.width = (s.decay * 100) + '%'; }, 200);
   });
 
-  // 进度条节点定位
-  setTimeout(() => {
-    document.getElementById('prog-bar').style.width = '100%';
-    document.getElementById('prog-d3').style.left   = '10%';
-    document.getElementById('prog-d5').style.left   = '16.7%';
-    document.getElementById('prog-d15').style.left  = '50%';
-    document.getElementById('prog-d30').style.left  = '100%';
-  }, 200);
+  document.getElementById('burstAction').textContent = verdict.burst;
 
   // 计算详情
-  document.getElementById('d1').textContent  = `${u2h.toFixed(1)} 赞/h`;
-  document.getElementById('d2').textContent  = `${c2h.toFixed(1)} 评/h`;
+  document.getElementById('d1').textContent  = `${u2h.toFixed(1)}`;
+  document.getElementById('d2').textContent  = `${c2h.toFixed(1)}`;
   document.getElementById('d3c').textContent = S.toLocaleString();
-  document.getElementById('d4').textContent  = `${S2.toLocaleString()} (×${(R*100).toFixed(1)}%)`;
-  document.getElementById('d5c').textContent = `F=${F}（${F===5?'普通帖':F===8?'不错，有热度':'爆帖！'}）`;
+  document.getElementById('d4').textContent  = `${S2.toLocaleString()} (R=${R}%)`;
+  document.getElementById('d5c').textContent = `F=${F}（${F===5?'普通':F===8?'不错':'爆帖'}）`;
   document.getElementById('d6').textContent  = V.toLocaleString() + ' UV';
   document.getElementById('d7').textContent  = orders30.toFixed(1) + ' 单';
-  document.getElementById('d8').textContent  = '¥' + Math.round(gmv30).toLocaleString();
 
-  // 保存历史
-  const title = document.getElementById('pTitle').textContent ||
-                document.getElementById('url').value || '手动输入';
+  // 存历史
+  const title = document.getElementById('pTitle').textContent || document.getElementById('url').value || '手动输入';
   const sub   = document.getElementById('pSub').textContent || '';
-  const recs  = load();
   recs.unshift({
-    id: Date.now(), title, sub, V, U, C, convRate, avgOrder,
-    gmv30: Math.round(gmv30), orders30: orders30.toFixed(1),
-    d3: Math.round(gmv30*DECAY[3]), d5: Math.round(gmv30*DECAY[5]),
-    d15: Math.round(gmv30*DECAY[15]),
-    ts: new Date().toLocaleString('zh-CN')
+    id: Date.now(), title, sub, V, U, C, score, convRate, avgOrder,
+    gmv30: Math.round(gmv30), d3: Math.round(gmv30*DECAY[3]), d5: Math.round(gmv30*DECAY[5]),
+    verdict: verdict.level, ts: new Date().toLocaleString('zh-CN')
   });
   save(recs); renderHistory();
   document.getElementById('result').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -549,8 +617,7 @@ function calculate() {
 function toggleDetail() {
   detailOpen = !detailOpen;
   document.getElementById('detailBox').style.display = detailOpen ? 'block' : 'none';
-  document.querySelector('.detail-toggle').textContent =
-    detailOpen ? '收起计算过程 ▴' : '展开计算过程 ▾';
+  document.querySelector('.detail-toggle').textContent = detailOpen ? '收起计算过程 ▴' : '展开计算过程 ▾';
 }
 
 // ── 历史 ──
@@ -559,21 +626,29 @@ function save(r) { localStorage.setItem(KEY, JSON.stringify(r)); }
 
 function renderHistory() {
   const recs = load();
+  document.getElementById('histCount').textContent = recs.length ? `共 ${recs.length} 条` : '';
   const wrap = document.getElementById('histWrap');
-  if (!recs.length) { wrap.innerHTML = '<p class="empty">暂无记录</p>'; return; }
+  if (!recs.length) { wrap.innerHTML = '<p class="empty">暂无记录，评估第一条帖子后自动保存</p>'; return; }
+
+  const allGmv = recs.map(r => r.gmv30).sort((a,b) => b-a);
+
   let h = `<table class="hist-table"><thead><tr>
-    <th>帖子</th><th>流量UV</th><th>D3 GMV</th><th>D5 GMV</th><th>D30 GMV</th><th></th>
+    <th>帖子</th><th>评分</th><th>D5 GMV</th><th>D30 GMV</th><th>排名</th><th></th>
   </tr></thead><tbody>`;
   for (const r of recs) {
+    const rank = allGmv.indexOf(r.gmv30);
+    const pct  = Math.round((1 - rank / allGmv.length) * 100);
+    const pctClass = pct >= 70 ? 'top' : pct >= 40 ? 'mid' : 'low';
+    const vColor = r.verdict === 'green' ? '#4ade80' : r.verdict === 'yellow' ? '#fbbf24' : '#f87171';
     h += `<tr>
       <td>
-        <div style="color:#ccc;font-weight:600;font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.title}">${r.title}</div>
-        <div style="font-size:11px;color:#444">${r.sub} · ${r.ts}</div>
+        <div style="color:#ccc;font-weight:600;font-size:12px;max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.title}">${r.title}</div>
+        <div style="font-size:10px;color:#444">${r.sub} · ${r.ts}</div>
       </td>
-      <td>${Number(r.V).toLocaleString()}</td>
-      <td class="hist-gmv" style="color:#ff4500">¥${Number(r.d3).toLocaleString()}</td>
-      <td class="hist-gmv" style="color:#f59e0b">¥${Number(r.d5).toLocaleString()}</td>
-      <td class="hist-gmv">¥${Number(r.gmv30).toLocaleString()}</td>
+      <td><span style="color:${vColor};font-weight:700">${r.score}</span></td>
+      <td style="color:#fb923c;font-weight:700">¥${Number(r.d5).toLocaleString()}</td>
+      <td style="color:#4ade80;font-weight:700">¥${Number(r.gmv30).toLocaleString()}</td>
+      <td><span class="pct-badge ${pctClass}">Top ${100-pct+1}%</span></td>
       <td><button class="btn-del" onclick="delRec(${r.id})">×</button></td>
     </tr>`;
   }
@@ -582,7 +657,6 @@ function renderHistory() {
 }
 
 function delRec(id) { save(load().filter(r => r.id !== id)); renderHistory(); }
-
 window.onload = renderHistory;
 </script>
 </body>
