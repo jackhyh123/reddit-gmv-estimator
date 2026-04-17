@@ -64,11 +64,29 @@ CATEGORIES = {
     },
 }
 
+def normalize_text(text: str) -> str:
+    """
+    清除微店/淘宝常见反爬干扰字符：
+      "N.ike" → "nike"
+      "A.ir F.or.ce" → "air force"
+      "ad.idas Y.-3" → "adidas y-3"
+      "G.el-Ka.hana" → "gel-kahana"
+    """
+    # 去掉字母/汉字之间的点（保留品牌连字符如 Y-3）
+    t = re.sub(r'(?<=[a-zA-Z\u4e00-\u9fff])\.(?=[a-zA-Z\u4e00-\u9fff])', '', text)
+    # 压缩多余空格
+    t = re.sub(r'\s+', ' ', t)
+    return t.lower()
+
+
 def detect_categories(text: str) -> dict:
-    t = text.lower()
-    result = {}
+    # 同时用原文 + 清洗版，两路命中
+    t_raw    = text.lower()
+    t_clean  = normalize_text(text)
+    result   = {}
     for cat_id, cat in CATEGORIES.items():
-        hits = [kw for kw in cat['keywords'] if kw in t]
+        hits = list({kw for kw in cat['keywords']
+                     if kw in t_raw or kw in t_clean})
         if hits:
             result[cat_id] = {'score': len(hits), 'hits': hits[:5]}
     return result
