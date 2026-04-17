@@ -905,19 +905,42 @@ function clearPreset() {
 
 // ── Reddit 抓取 ──
 function parseUrl(url) {
-  const m = url.match(/reddit\.com\/r\/([^/]+)\/comments\/([a-z0-9]+)/i);
-  return m ? { sub: m[1], id: m[2] } : null;
+  // 标准长链接
+  const m = url.match(/reddit\.com\/r\/([^/?#]+)\/comments\/([a-z0-9]+)/i);
+  if (m) return { sub: m[1], id: m[2], isShort: false };
+  // 移动端短链接 /r/{sub}/s/{code}
+  const s = url.match(/reddit\.com\/r\/([^/?#]+)\/s\/([a-zA-Z0-9]+)/i);
+  if (s) return { sub: s[1], code: s[2], isShort: true };
+  return null;
 }
+
+async function resolveShortUrl(sub, code) {
+  // fetch 短链接 JSON，浏览器自动跟随重定向，response.url 就是最终 URL
+  const res = await fetch(
+    `https://www.reddit.com/r/${sub}/s/${code}.json?raw_json=1`,
+    { headers: { Accept: 'application/json' }, redirect: 'follow' }
+  );
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  // 直接拿重定向后的 JSON 数据
+  const data = await res.json();
+  return data;
+}
+
 async function fetchPost() {
   const url = document.getElementById('url').value.trim();
   if (!url) return;
   const p = parseUrl(url);
-  if (!p) { showErr('无法识别链接，请确认是 Reddit 帖子 URL'); return; }
+  if (!p) { showErr('无法识别链接，请确认是 Reddit 帖子 URL（支持长链接和手机分享短链接）'); return; }
   setLoading(true); hideErr();
   try {
-    const res = await fetch(`https://www.reddit.com/r/${p.sub}/comments/${p.id}.json?raw_json=1`, { headers: { Accept: 'application/json' }});
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const data = await res.json();
+    let data;
+    if (p.isShort) {
+      data = await resolveShortUrl(p.sub, p.code);
+    } else {
+      const res = await fetch(`https://www.reddit.com/r/${p.sub}/comments/${p.id}.json?raw_json=1`, { headers: { Accept: 'application/json' }});
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      data = await res.json();
+    }
     const post = data[0].data.children[0].data;
     setFetched('upvotes', post.score);
     setFetched('comments', post.num_comments);
@@ -938,7 +961,7 @@ async function fetchPost() {
     currentAuthor = post.author;
     onDataChange();
   } catch(e) {
-    showErr('自动获取失败，请手动填写下方互动数据');
+    showErr('自动获取失败，请手动填写下方互动数据（或检查链接是否正确）');
   } finally { setLoading(false); }
 }
 function setFetched(id, val) {
