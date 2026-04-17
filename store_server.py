@@ -1,25 +1,27 @@
 #!/usr/bin/env python3
 """
 Reddit GMV Estimator — 店铺分析本地服务器
-真实抓取微店/淘宝/1688，提取商品列表，输出品类匹配分析。
 
 启动:
-    pip install flask flask-cors playwright playwright-stealth
+    pip install flask flask-cors playwright playwright-stealth requests
     playwright install chromium
     python store_server.py
 
-端口: 5678
-
-平台支持说明:
-  微店   ✅ 全自动  — 拦截 thor.weidian.com API，无需登录
-  淘宝   ✅ 自动    — 需使用 --use-browser-cookies 选项或先在 Chrome 登录
-  1688   ✅ 自动    — 同上，移动版绕 CAPTCHA
+Reddit API 配置（可选，大幅提升抓取成功率）:
+  1. 访问 https://www.reddit.com/prefs/apps → 创建 "script" 类型应用
+  2. 复制 client_id（应用名下方的短字符串）和 client_secret
+  3. 在本文件同目录创建 reddit_credentials.json：
+     {"client_id": "xxx", "client_secret": "yyy", "username": "你的Reddit用户名"}
+  4. 重启服务器，Reddit 数据抓取将切换为 OAuth2 认证模式（不受 IP 封锁影响）
 """
 import asyncio
 import json
+import os
 import re
 import sys
+import time
 import urllib.request
+import requests as _requests
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
@@ -84,6 +86,71 @@ CATEGORIES = {
         ]
     },
 }
+
+# ── Reddit OAuth2 ────────────────────────────────────────────
+
+_REDDIT_TOKEN: dict = {}   # {'token': str, 'expires_at': float}
+_REDDIT_CREDS: dict = {}   # client_id / client_secret / username
+
+def _load_reddit_creds():
+    """从同目录 reddit_credentials.json 加载凭据。"""
+    global _REDDIT_CREDS
+    path = os.path.join(os.path.dirname(__file__), 'reddit_credentials.json')
+    if os.path.exists(path):
+        with open(path) as f:
+            _REDDIT_CREDS = json.load(f)
+
+_load_reddit_creds()
+
+def _reddit_oauth_token() -> str | None:
+    """返回有效的 OAuth Bearer token，过期自动刷新。未配置凭据返回 None。"""
+    if not _REDDIT_CREDS.get('client_id'):
+        return None
+    now = time.time()
+    if _REDDIT_TOKEN.get('token') and _REDDIT_TOKEN.get('expires_at', 0) > now + 60:
+        return _REDDIT_TOKEN['token']
+
+    proxies = {'https': 'http://127.0.0.1:7890', 'http': 'http://127.0.0.1:7890'}
+    ua = f"RedditGMV/1.0 (by /u/{_REDDIT_CREDS.get('username','bot')})"
+
+    resp = _requests.post(
+        'https://www.reddit.com/api/v1/access_token',
+        auth=(_REDDIT_CREDS['client_id'], _REDDIT_CREDS.get('client_secret', '')),
+        data={'grant_type': 'client_credentials'},
+        headers={'User-Agent': ua},
+        proxies=proxies,
+        timeout=15,
+    )
+    resp.raise_for_status()
+    data = resp.json()
+    _REDDIT_TOKEN['token'] = data['access_token']
+    _REDDIT_TOKEN['expires_at'] = now + data.get('expires_in', 3600)
+    return _REDDIT_TOKEN['token']
+
+
+def _reddit_api_get(path: str, params: dict = None) -> dict:
+    """
+    用 OAuth token 请求 oauth.reddit.com（认证请求，不受 IP 封锁影响）。
+    path: 如 /user/foo/submitted
+    """
+    token = _reddit_oauth_token()
+    if token is None:
+        raise RuntimeError('NO_CREDENTIALS')
+
+    proxies = {'https': 'http://127.0.0.1:7890', 'http': 'http://127.0.0.1:7890'}
+    ua = f"RedditGMV/1.0 (by /u/{_REDDIT_CREDS.get('username','bot')})"
+    url = f'https://oauth.reddit.com{path}'
+
+    resp = _requests.get(
+        url,
+        params=params or {},
+        headers={'Authorization': f'Bearer {token}', 'User-Agent': ua},
+        proxies=proxies,
+        timeout=15,
+    )
+    resp.raise_for_status()
+    return resp.json()
+
 
 def normalize_text(text: str) -> str:
     """
@@ -348,6 +415,119 @@ def compute_match(products: list[str], blogger_cats: dict) -> dict:
     }
 
 
+# ── Reddit 抓取（Playwright，绕过 403 拦截） ─────────────────
+
+REDDIT_UA = (
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) '
+    'AppleWebKit/537.36 (KHTML, like Gecko) '
+    'Chrome/124.0.0.0 Safari/537.36'
+)
+STEALTH_PATCH = (
+    "Object.defineProperty(navigator,'webdriver',{get:()=>undefined});"
+    "window.chrome={runtime:{}};"
+)
+
+async def _reddit_fetch_via_playwright(api_path: str, timeout: int = 30000) -> str:
+    """
+    用 Playwright 直接访问 old.reddit.com 的 .json 端点。
+    old.reddit.com 在真实浏览器环境下返回纯 JSON，不受新版 UI 限制。
+    返回原始 JSON 字符串（<pre> 标签包裹的内容或直接 JSON）。
+    """
+    from playwright.async_api import async_playwright
+
+    # old.reddit.com 对真实浏览器直接返回 JSON
+    url = f'https://old.reddit.com{api_path}'
+
+    try:
+        from playwright_stealth import Stealth
+        _stealth = Stealth()
+    except ImportError:
+        _stealth = None
+
+    async with async_playwright() as pw:
+        browser = await pw.chromium.launch(
+            headless=True,
+            args=[
+                '--disable-blink-features=AutomationControlled',
+                '--no-sandbox',
+                '--disable-dev-shm-usage',
+            ],
+        )
+        ctx = await browser.new_context(
+            user_agent=REDDIT_UA,
+            locale='en-US',
+            timezone_id='America/New_York',
+            extra_http_headers={
+                'Accept-Language': 'en-US,en;q=0.9',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Sec-Ch-Ua': '"Chromium";v="124", "Google Chrome";v="124"',
+                'Sec-Ch-Ua-Mobile': '?0',
+                'Sec-Ch-Ua-Platform': '"macOS"',
+            },
+        )
+        await ctx.add_init_script(STEALTH_PATCH)
+        page = await ctx.new_page()
+
+        if _stealth:
+            try:
+                await _stealth.apply_stealth_async(page)
+            except Exception:
+                pass
+
+        await page.route('**/*.{png,jpg,jpeg,gif,svg,webp,woff,woff2,ttf,ico,mp4,webm}',
+                         lambda r: r.abort())
+
+        resp = await page.goto(url, wait_until='domcontentloaded', timeout=timeout)
+        if not resp:
+            await browser.close()
+            raise RuntimeError('无响应')
+
+        # old.reddit.com 的 .json 在浏览器里以 <pre>JSON</pre> 形式呈现
+        content = await page.content()
+        await browser.close()
+
+    # 提取 <pre> 内容
+    m = re.search(r'<pre[^>]*>([\s\S]+?)</pre>', content, re.I)
+    if m:
+        return m.group(1).strip()
+    # 某些情况直接是纯文本 JSON
+    body_m = re.search(r'<body[^>]*>([\s\S]+?)</body>', content, re.I)
+    raw = (body_m.group(1) if body_m else content).strip()
+    if raw.startswith('{') or raw.startswith('['):
+        return raw
+    raise RuntimeError(f'无法从响应中提取 JSON（前80字符：{content[:80]}）')
+
+
+async def fetch_reddit_post(sub: str, post_id: str) -> dict:
+    # 方案1：OAuth API（已配置凭据时最可靠）
+    try:
+        data = _reddit_api_get(f'/r/{sub}/comments/{post_id}', {'raw_json': 1, 'limit': 1})
+        return data[0]['data']['children'][0]['data']
+    except RuntimeError as e:
+        if 'NO_CREDENTIALS' not in str(e):
+            raise
+    # 方案2：Playwright
+    path = f'/r/{sub}/comments/{post_id}.json?raw_json=1&limit=1'
+    text = await _reddit_fetch_via_playwright(path)
+    data = json.loads(text)
+    return data[0]['data']['children'][0]['data']
+
+
+async def fetch_reddit_user_posts(username: str, limit: int = 100) -> list:
+    # 方案1：OAuth API
+    try:
+        data = _reddit_api_get(f'/user/{username}/submitted', {'raw_json': 1, 'limit': limit})
+        return [c['data'] for c in data['data']['children']]
+    except RuntimeError as e:
+        if 'NO_CREDENTIALS' not in str(e):
+            raise
+    # 方案2：Playwright
+    path = f'/user/{username}/submitted.json?limit={limit}&raw_json=1'
+    text = await _reddit_fetch_via_playwright(path)
+    data = json.loads(text)
+    return [c['data'] for c in data['data']['children']]
+
+
 # ── 主抓取流程 ──────────────────────────────────────────────
 
 async def do_scrape(url: str, blogger_cats: dict) -> dict:
@@ -448,7 +628,11 @@ async def do_scrape(url: str, blogger_cats: dict) -> dict:
 
 @app.route('/health')
 def health():
-    return jsonify({'status': 'ok', 'version': '1.2'})
+    return jsonify({
+        'status': 'ok',
+        'version': '1.3',
+        'reddit_oauth': bool(_REDDIT_CREDS.get('client_id')),
+    })
 
 
 @app.route('/resolve', methods=['GET', 'OPTIONS'])
@@ -488,6 +672,31 @@ def resolve_reddit_url():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@app.route('/reddit/post/<sub>/<post_id>', methods=['GET'])
+def reddit_post(sub, post_id):
+    """代理抓取 Reddit 帖子数据（绕过浏览器 403）。"""
+    try:
+        loop   = asyncio.new_event_loop()
+        result = loop.run_until_complete(fetch_reddit_post(sub, post_id))
+        loop.close()
+        return jsonify({'success': True, 'post': result})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/reddit/user/<username>/posts', methods=['GET'])
+def reddit_user_posts(username):
+    """代理抓取 Reddit 用户近期帖子（绕过浏览器 403）。"""
+    limit = int(request.args.get('limit', 100))
+    try:
+        loop   = asyncio.new_event_loop()
+        posts  = loop.run_until_complete(fetch_reddit_user_posts(username, limit))
+        loop.close()
+        return jsonify({'success': True, 'posts': posts})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @app.route('/analyze', methods=['POST', 'OPTIONS'])
 def analyze():
     if request.method == 'OPTIONS':
@@ -510,12 +719,20 @@ def analyze():
 
 if __name__ == '__main__':
     print('\n' + '='*52)
-    print('  Reddit GMV — 店铺分析服务器 v1.2')
+    print('  Reddit GMV — 店铺分析服务器 v1.3')
     print('  http://127.0.0.1:5678')
     print()
     print('  平台支持:')
     print('  微店  ✅ 全自动（无需登录）')
     print('  淘宝  ⚠️  建议在 Chrome 中已登录淘宝')
     print('  1688  ⚠️  移动版自动绕 CAPTCHA')
+    if _REDDIT_CREDS.get('client_id'):
+        print()
+        print('  Reddit ✅ OAuth2 已配置（高可靠抓取）')
+    else:
+        print()
+        print('  Reddit ⚠️  未配置 OAuth（降级用 Playwright）')
+        print('  → 新建 reddit_credentials.json 可大幅提升成功率')
+        print('    详见启动说明中的"Reddit API 配置"')
     print('='*52 + '\n')
     app.run(host='127.0.0.1', port=5678, debug=False)

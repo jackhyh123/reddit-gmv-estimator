@@ -951,18 +951,26 @@ async function resolveShortUrl(sub, code) {
 }
 
 async function fetchRedditJson(sub, id) {
+  // 优先：本地服务器（Playwright，绕过 Reddit 403）
+  try {
+    const lr = await fetch(`http://127.0.0.1:5678/reddit/post/${encodeURIComponent(sub)}/${encodeURIComponent(id)}`,
+                           { signal: AbortSignal.timeout(25000) });
+    if (lr.ok) {
+      const d = await lr.json();
+      if (d.success) return [{ data: { children: [{ data: d.post }] } }];
+    }
+  } catch (_) {}
+
+  // 降级：直接 fetch（VPN 环境可用）
   let res;
   try {
     res = await fetch(
       `https://www.reddit.com/r/${sub}/comments/${id}.json?raw_json=1`,
       { headers: { Accept: 'application/json' } }
     );
-  } catch (networkErr) {
-    throw new Error('NETWORK');
-  }
+  } catch (_) { throw new Error('NETWORK'); }
   if (!res.ok) throw new Error('HTTP ' + res.status);
   const text = await res.text();
-  // Reddit 被拦截时返回 HTML（"whoa there, pardner!"），不是 JSON
   if (text.trimStart().startsWith('<')) throw new Error('BLOCKED');
   return JSON.parse(text);
 }
@@ -1299,13 +1307,31 @@ async function analyzeBlogger() {
   document.getElementById('bloggerResult').style.display = 'none';
 
   try {
-    const res = await fetch(
-      `https://www.reddit.com/user/${encodeURIComponent(raw)}/submitted.json?limit=100&raw_json=1`,
-      { headers: { Accept: 'application/json' } }
-    );
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const data = await res.json();
-    const all  = data.data.children.map(c => c.data);
+    let all;
+    // 优先：本地服务器（Playwright）
+    try {
+      const lr = await fetch(
+        `http://127.0.0.1:5678/reddit/user/${encodeURIComponent(raw)}/posts?limit=100`,
+        { signal: AbortSignal.timeout(30000) }
+      );
+      if (lr.ok) {
+        const d = await lr.json();
+        if (d.success) all = d.posts;
+      }
+    } catch (_) {}
+
+    // 降级：直接 fetch
+    if (!all) {
+      const res = await fetch(
+        `https://www.reddit.com/user/${encodeURIComponent(raw)}/submitted.json?limit=100&raw_json=1`,
+        { headers: { Accept: 'application/json' } }
+      );
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const text = await res.text();
+      if (text.trimStart().startsWith('<')) throw new Error('BLOCKED');
+      const data = JSON.parse(text);
+      all = data.data.children.map(c => c.data);
+    }
     const now  = Date.now() / 1000;
     const posts = all.filter(p => (now - p.created_utc) <= 30 * 86400);
 
