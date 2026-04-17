@@ -343,6 +343,29 @@ input[type=number]::placeholder { color: #2a2d3a; font-size: 13px; }
 .match-mid  .mi-value { color: #fbbf24; }
 .match-low  .mi-value { color: #f87171; }
 
+/* 真实店铺分析结果 */
+.store-loading { text-align: center; padding: 20px; color: #444; font-size: 13px; }
+.store-loading .sl-spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #252836; border-top-color: #4a6cf7; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: 8px; }
+.store-server-hint { background: #12172a; border: 1px dashed #2a3050; border-radius: 9px; padding: 14px 16px; font-size: 12px; color: #444; line-height: 1.8; }
+.store-server-hint code { background: #0f1117; color: #6c8fff; padding: 2px 7px; border-radius: 4px; font-family: monospace; font-size: 12px; }
+.store-real-result {}
+.srr-shop { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.srr-shop-name { font-size: 14px; font-weight: 800; color: #ccc; }
+.srr-count { font-size: 11px; color: #444; }
+.srr-reason { background: #0f1117; border-radius: 8px; padding: 11px 13px; font-size: 12px; color: #888; line-height: 1.6; margin-bottom: 12px; }
+.srr-reason strong { color: #4ade80; }
+.srr-cats { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 12px; }
+.srr-cat-tag { display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px; border-radius: 20px; background: #1a1d27; border: 1px solid #252836; font-size: 12px; }
+.srr-cat-tag .ct-name { color: #ccc; font-weight: 600; }
+.srr-cat-tag .ct-hits { color: #444; font-size: 10px; }
+.srr-cat-tag.match { border-color: #22c55e44; background: #071c10; }
+.srr-cat-tag.match .ct-name { color: #4ade80; }
+.sample-prods { margin-top: 12px; }
+.sample-prods .sp-label { font-size: 10px; color: #444; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
+.sp-grid { display: flex; flex-direction: column; gap: 5px; }
+.sp-item { background: #0f1117; border-radius: 6px; padding: 7px 10px; font-size: 11px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sp-item:hover { color: #aaa; }
+
 /* 反淘淘金入口 */
 .fantao-entry {
   display: flex; align-items: center; justify-content: space-between;
@@ -796,8 +819,10 @@ const CATALOG = {
 // 当前选中品类
 let currentCatId = 'luxury-basics';
 let currentAuthor = '';
+let currentBloggerCategories = {};   // {cat_id: post_count} — 供店铺匹配使用
 const KEY = 'reddit_gmv_v5';
 let detailOpen = false;
+const STORE_API = 'http://127.0.0.1:5678';
 
 // ── 品类自动识别 ──
 function detectCategory(title, sub) {
@@ -1202,6 +1227,7 @@ function renderBlogger(username, posts, isSparse) {
   // 主力领域
   const catCounts = {};
   posts.forEach(p => { const c = detectCategory(p.title, p.subreddit); catCounts[c] = (catCounts[c]||0)+1; });
+  currentBloggerCategories = catCounts;   // 全局存储供店铺匹配使用
   const topCatId = Object.entries(catCounts).sort((a,b)=>b[1]-a[1])[0]?.[0] || 'luxury-basics';
   const topCat   = CATALOG[topCatId] || CATALOG['luxury-basics'];
 
@@ -1298,62 +1324,143 @@ function renderBlogger(username, posts, isSparse) {
   document.getElementById('bloggerResult').scrollIntoView({ behavior:'smooth', block:'nearest' });
 }
 
-// ── 店铺匹配 ──
-function analyzeStore() {
+// ── 店铺匹配（真实抓取） ──
+async function analyzeStore() {
   const url = document.getElementById('storeUrl').value.trim();
   if (!url) return;
 
-  let platLabel, platClass, storeType;
-  if (/weidian\.com/.test(url)) {
-    platLabel = '🛍️ 微店'; platClass = 'plt-weidian'; storeType = 'retail';
-  } else if (/taobao\.com|tmall\.com/.test(url)) {
-    platLabel = '🟠 淘宝'; platClass = 'plt-taobao'; storeType = 'retail';
-  } else if (/1688\.com/.test(url)) {
-    platLabel = '🟢 1688'; platClass = 'plt-shop1688'; storeType = 'wholesale';
-  } else {
-    platLabel = '🔗 其他平台'; platClass = 'plt-other'; storeType = 'retail';
-  }
-
-  const bhScore    = +document.getElementById('bhScore').textContent || 0;
-  const topCatEmoji = document.getElementById('sv-cat').textContent || '—';
-  const viralTxt   = document.getElementById('sv-viral').textContent || '0%';
-  const viralNum   = parseFloat(viralTxt) || 0;
-  const cuTxt      = document.getElementById('sv-cu').textContent || '0%';
-  const cuNum      = parseFloat(cuTxt) || 0;
-
-  // 匹配分：博主评分 × 平台系数
-  const platFactor = storeType === 'wholesale' ? 0.7 : 0.85;
-  const matchScore = Math.min(95, Math.round(bhScore * platFactor + 10));
-  const matchClass = matchScore >= 70 ? 'match-high' : matchScore >= 45 ? 'match-mid' : 'match-low';
-  const matchText  = matchScore >= 70 ? '高度匹配' : matchScore >= 45 ? '基本匹配' : '匹配较弱';
-
-  const advMap = {
-    'plt-shop1688': `1688 供货商适合批量起订。该博主爆帖率 ${viralTxt}，若带货稳定可谈独家供货协议降低成本，建议先小批量测单。`,
-    'plt-weidian':  `微店适合快速起量。该博主评论/赞比 ${cuTxt}，讨论活跃度${cuNum>=15?'强':'一般'}，建议提供专属折扣码追踪实际转化，初次合作免费寄样。`,
-    'plt-taobao':   `淘宝店铺建议用 UTM 参数追踪博主带来的流量，该博主评论互动 ${cuTxt}，转化信号${cuNum>=15?'强':'一般'}，可优先测试爆帖商品的预热投放。`,
-    'plt-other':    `建议提供独立落地页 + 折扣码追踪该博主转化，避免数据混淆。`
-  };
-  const advice = advMap[platClass] || advMap['plt-other'];
-
   const result = document.getElementById('storeResult');
   result.style.display = 'block';
+  result.innerHTML = `<div class="store-loading"><span class="sl-spinner"></span>正在访问店铺页面，抓取商品信息...</div>`;
+
+  // 先 ping 本地服务器是否在线
+  let serverAlive = false;
+  try {
+    const ping = await fetch(`${STORE_API}/health`, { signal: AbortSignal.timeout(2000) });
+    serverAlive = ping.ok;
+  } catch(_) {}
+
+  if (!serverAlive) {
+    result.innerHTML = `
+      <div class="store-server-hint">
+        <strong style="color:#6c8fff">🔌 需要启动本地分析服务</strong><br>
+        店铺分析需要在你的电脑上运行一个本地脚本（Playwright 浏览器）来真实访问微店/淘宝/1688。<br><br>
+        <strong>一次性安装（只需装一次）：</strong><br>
+        <code>pip install flask flask-cors playwright</code><br>
+        <code>playwright install chromium</code><br><br>
+        <strong>启动服务（每次使用前运行）：</strong><br>
+        <code>python ${window.location.protocol === 'file:' ? '' : ''}store_server.py</code><br><br>
+        看到 <code>http://127.0.0.1:5678</code> 提示后，刷新页面再点分析匹配。
+      </div>`;
+    return;
+  }
+
+  try {
+    const res = await fetch(`${STORE_API}/analyze`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        store_url: url,
+        blogger_categories: currentBloggerCategories,
+      }),
+      signal: AbortSignal.timeout(40000),
+    });
+    const data = await res.json();
+
+    if (!data.success) throw new Error(data.error || '分析失败');
+    renderStoreResult(data, url);
+  } catch(e) {
+    result.innerHTML = `<div class="err" style="display:block">分析出错：${e.message}</div>`;
+  }
+}
+
+function renderStoreResult(d, url) {
+  const platMap = {
+    '微店': { label: '🛍️ 微店', cls: 'plt-weidian' },
+    '淘宝': { label: '🟠 淘宝/天猫', cls: 'plt-taobao' },
+    '1688': { label: '🟢 1688', cls: 'plt-shop1688' },
+    '其他': { label: '🔗 其他平台', cls: 'plt-other' },
+  };
+  const plat = platMap[d.platform] || platMap['其他'];
+
+  const matchClass = d.match_score >= 70 ? 'match-high' : d.match_score >= 45 ? 'match-mid' : 'match-low';
+  const matchText  = d.match_score >= 70 ? '高度匹配 ✅' : d.match_score >= 45 ? '基本匹配 ⚠️' : '匹配较弱 ❌';
+
+  // 博主数据（用于合作建议）
+  const viralTxt = document.getElementById('sv-viral').textContent || '—';
+  const cuTxt    = document.getElementById('sv-cu').textContent || '—';
+  const cuNum    = parseFloat(cuTxt) || 0;
+
+  // 合作建议（基于真实品类匹配 + 平台特性）
+  const hasOverlap = d.overlap_cats && d.overlap_cats.length > 0;
+  const adviceByPlatform = {
+    '微店':  hasOverlap
+      ? `品类重叠明确，博主内容能直接引流到你的微店。建议生成专属折扣码（如 REDDIT10）追踪转化，爆帖期内前3天是黄金窗口，评论/赞比 ${cuTxt} 说明讨论活跃。`
+      : `品类差异较大，建议先调整选品向博主常发品类靠拢，或另寻同类别博主。`,
+    '淘宝': hasOverlap
+      ? `淘宝店建议用淘口令 + UTM 追踪来源，该博主爆帖率 ${viralTxt}，可在帖子高热期同步开直通车放大流量。`
+      : `品类匹配度不足，建议先测小订单验证转化后再加大投放。`,
+    '1688': hasOverlap
+      ? `供应商适合批量合作。博主带货若稳定可谈独家 SKU 合作，用博主帖子真实反馈反推 1688 选品，高评论/赞比（${cuTxt}）说明用户真实需求强。`
+      : `1688 供货与博主内容品类不符，建议优先接触品类匹配的博主。`,
+    '其他':  `建议提供独立落地页 + 折扣码，确保博主带来的流量可追踪。`,
+  };
+  const advice = adviceByPlatform[d.platform] || adviceByPlatform['其他'];
+
+  // 品类标签
+  const overlapSet = new Set(d.overlap_cats || []);
+  const catTags = (d.store_top_cats || []).map(c => {
+    const isMatch = overlapSet.has(`${c.emoji} ${c.name}`);
+    return `<div class="srr-cat-tag ${isMatch ? 'match' : ''}">
+      <span>${c.emoji}</span>
+      <span class="ct-name">${c.name}</span>
+      <span class="ct-hits">${c.score}词命中</span>
+    </div>`;
+  }).join('');
+
+  // 样品商品列表
+  const sampleHtml = d.sample_products && d.sample_products.length
+    ? `<div class="sample-prods">
+        <div class="sp-label">抓取到的商品样本（共 ${d.product_count} 件）</div>
+        <div class="sp-grid">${d.sample_products.map(p =>
+          `<div class="sp-item" title="${p}">${p}</div>`).join('')}
+        </div>
+      </div>`
+    : '';
+
+  const result = document.getElementById('storeResult');
   result.innerHTML = `
-    <div class="store-platform ${platClass}">${platLabel}</div>
-    <div class="match-grid">
-      <div class="match-item ${matchClass}">
-        <div class="mi-label">综合匹配度</div>
-        <div class="mi-value">${matchScore}%</div>
-        <div class="mi-desc">${matchText} — 基于博主评分 + 发帖风格</div>
+    <div class="store-real-result">
+      <div class="srr-shop">
+        <div class="store-platform ${plat.cls}" style="margin-bottom:0">${plat.label}</div>
+        <div>
+          <div class="srr-shop-name">${d.shop_name || url}</div>
+          <div class="srr-count">分析了 ${d.product_count} 件商品</div>
+        </div>
       </div>
-      <div class="match-item">
-        <div class="mi-label">博主主力品类</div>
-        <div class="mi-value" style="font-size:26px">${topCatEmoji}</div>
-        <div class="mi-desc">爆帖率 ${viralTxt} · 评论/赞 ${cuTxt}</div>
+
+      <div class="match-grid" style="margin-bottom:12px">
+        <div class="match-item ${matchClass}">
+          <div class="mi-label">综合匹配度</div>
+          <div class="mi-value">${d.match_score}%</div>
+          <div class="mi-desc">${matchText}</div>
+        </div>
+        <div class="match-item">
+          <div class="mi-label">店铺识别品类</div>
+          <div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:5px">
+            ${catTags || '<span style="color:#444;font-size:11px">未识别到明确品类</span>'}
+          </div>
+        </div>
       </div>
-      <div class="match-item" style="grid-column:1/-1">
+
+      <div class="srr-reason">${d.reason}</div>
+
+      <div class="match-item" style="margin-bottom:12px">
         <div class="mi-label">合作建议</div>
-        <div class="mi-value" style="font-size:12px;font-weight:600;color:#aaa;line-height:1.6">${advice}</div>
+        <div style="font-size:12px;color:#888;margin-top:6px;line-height:1.7">${advice}</div>
       </div>
+
+      ${sampleHtml}
     </div>`;
 }
 
