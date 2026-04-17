@@ -62,6 +62,26 @@ CATEGORIES = {
             '运动鞋', '球鞋', '靴子', '鞋子', '拖鞋', '乐福鞋', '板鞋',
         ]
     },
+    'sportswear': {
+        'name': '球衣/运动服', 'emoji': '⚽',
+        'keywords': [
+            # 英文
+            'jersey', 'jerseys', 'kit', 'football shirt', 'soccer jersey',
+            'basketball jersey', 'football jersey', 'away kit', 'home kit',
+            'thai jersey', 'thai quality', 'player version', 'match jersey',
+            'nba', 'nfl', 'mlb', 'nhl', 'ucl', 'world cup', 'champions league',
+            'real madrid', 'barcelona', 'manchester', 'arsenal', 'chelsea',
+            'psg', 'juventus', 'inter milan', 'ac milan', 'liverpool',
+            'brazil', 'argentina', 'france', 'germany', 'england',
+            # 中文
+            '球衣', '足球衣', '篮球衣', '运动服', '足球服', '篮球服',
+            '主场', '客场', '泰版', '泰国版', '球迷版', '球员版',
+            '世界杯', '欧冠', '英超', '西甲', '意甲', '德甲', '法甲',
+            '巴西', '阿根廷', '法国', '德国', '西班牙', '葡萄牙',
+            '皇马', '巴萨', '曼联', '利物浦', '阿森纳', '拜仁',
+            '耐克', '阿迪达斯', '彪马',
+        ]
+    },
 }
 
 def normalize_text(text: str) -> str:

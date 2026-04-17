@@ -809,7 +809,20 @@ const CATALOG = {
     example:     'Nike / Yeezy / 球鞋',
     convRate:    null,
     avgPrice:    380,
-    decay:       { 3: 0.15, 5: 0.35, 15: 0.65, 30: 1.0 },  // 鞋类爆发更快
+    decay:       { 3: 0.15, 5: 0.35, 15: 0.65, 30: 1.0 },
+    samples:     0,
+    calibrated:  null,
+    note:        '暂无校准数据，使用通用衰减曲线'
+  },
+
+  'sportswear': {
+    id:          'sportswear',
+    name:        '球衣/运动服',
+    emoji:       '⚽',
+    example:     'football jersey / NBA jersey / 泰版球衣',
+    convRate:    null,
+    avgPrice:    180,
+    decay:       { 3: 0.20, 5: 0.45, 15: 0.70, 30: 1.0 },  // 赛事节点爆发快
     samples:     0,
     calibrated:  null,
     note:        '暂无校准数据，使用通用衰减曲线'
@@ -827,6 +840,10 @@ const STORE_API = 'http://127.0.0.1:5678';
 // ── 品类自动识别 ──
 function detectCategory(title, sub) {
   const t = (title + ' ' + sub).toLowerCase();
+
+  // 球衣 / 运动服
+  if (/\b(jersey|jerseys|football\s?shirt|soccer\s?jersey|basketball\s?jersey|nba|nfl|world\s?cup|champions\s?league|ucl|premier\s?league|kit\b|home\s?kit|away\s?kit|thai\s?quality|player\s?version|real\s?madrid|barcelona|manchester|arsenal|liverpool|psg)\b|球衣|足球衣|篮球衣|泰版|主场|客场|世界杯|欧冠|英超|西甲/.test(t))
+    return 'sportswear';
 
   // 鞋类
   if (/\b(nike|yeezy|jordan|adidas|new\s?balance|\bnb\b|shoe|sneaker|boot|loafer|trainer|dunk|air\s?max|samba|gazelle|asics|vans|converse|footwear|kicks)\b/.test(t))
