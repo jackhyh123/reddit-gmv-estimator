@@ -935,29 +935,18 @@ async function resolveShortUrl(sub, code) {
     // 本地服务器未启动，忽略错误，继续尝试备用方案
   }
 
-  // 备用：直接 fetch 短链接，读 response.url（本机可能 CORS 通过）
+  // 备用：弹出引导框，让用户打开短链接后把完整 URL 粘贴回来
   if (!postId) {
-    try {
-      const htmlRes = await fetch(shortUrl, {
-        headers: { Accept: 'text/html,*/*' },
-        redirect: 'follow',
-        mode: 'no-cors'
-      });
-      // no-cors 模式下 response.url 也可能为空，尝试读取
-      const finalUrl = htmlRes.url;
-      if (finalUrl) {
-        const m2 = finalUrl.match(/reddit\.com\/r\/([^/?#]+)\/comments\/([a-z0-9]+)/i);
-        if (m2) { postSub = m2[1]; postId = m2[2]; }
-      }
-    } catch (_) {}
-  }
-
-  if (!postId) {
-    throw new Error(
-      '无法解析手机分享短链接。\n\n' +
-      '请启动本地服务器（在终端运行 python store_server.py），\n' +
-      '或将短链接在浏览器中打开后，复制完整 URL 再粘贴。'
-    );
+    return new Promise((resolve, reject) => {
+      showShortUrlHelper(shortUrl, (fullUrl) => {
+        const m2 = fullUrl.match(/reddit\.com\/r\/([^/?#]+)\/comments\/([a-z0-9]+)/i);
+        if (!m2) { reject(new Error('粘贴的链接不是有效的 Reddit 帖子地址')); return; }
+        fetch(`https://www.reddit.com/r/${m2[1]}/comments/${m2[2]}.json?raw_json=1`,
+              { headers: { Accept: 'application/json' } })
+          .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+          .then(resolve).catch(reject);
+      }, reject);
+    });
   }
 
   // 用真实 ID 拉 JSON
@@ -1004,7 +993,8 @@ async function fetchPost() {
     currentAuthor = post.author;
     onDataChange();
   } catch(e) {
-    showErr('自动获取失败，请手动填写下方互动数据（或检查链接是否正确）');
+    if (e.message !== '已取消')
+      showErr('自动获取失败，请手动填写下方互动数据（或检查链接是否正确）');
   } finally { setLoading(false); }
 }
 function setFetched(id, val) {
@@ -1019,6 +1009,58 @@ function setLoading(on) {
 }
 function showErr(m) { const e = document.getElementById('err'); e.textContent = m; e.style.display = 'block'; }
 function hideErr()  { document.getElementById('err').style.display = 'none'; }
+
+/* ── 短链接辅助弹框 ──────────────────────────────────── */
+function showShortUrlHelper(shortUrl, onSubmit, onCancel) {
+  // 移除旧弹框
+  const old = document.getElementById('shortUrlHelper');
+  if (old) old.remove();
+
+  const el = document.createElement('div');
+  el.id = 'shortUrlHelper';
+  el.innerHTML = `
+    <div style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;">
+      <div style="background:#fff;border-radius:12px;padding:28px 32px;max-width:480px;width:92%;box-shadow:0 8px 40px rgba(0,0,0,.25);font-family:sans-serif;">
+        <div style="font-size:17px;font-weight:700;margin-bottom:10px;">📋 手机分享短链接解析</div>
+        <div style="font-size:13px;color:#555;line-height:1.7;margin-bottom:16px;">
+          受浏览器限制，无法直接解析短链接。<br>
+          请按以下步骤操作：<br>
+          <strong>① 点击下方按钮</strong>，在新标签页打开链接<br>
+          <strong>② 等页面跳转完成</strong>，复制地址栏里的完整 URL<br>
+          <strong>③ 粘贴到下面输入框</strong>，点击确认
+        </div>
+        <a href="${shortUrl}" target="_blank" rel="noopener"
+           style="display:inline-block;background:#ff4500;color:#fff;padding:8px 18px;border-radius:6px;text-decoration:none;font-size:13px;margin-bottom:16px;">
+          🔗 在新标签页打开短链接
+        </a>
+        <input id="shortUrlInput" type="text" placeholder="粘贴完整 URL，如 https://www.reddit.com/r/.../comments/..."
+               style="width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid #ddd;border-radius:6px;font-size:13px;margin-bottom:14px;"/>
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+          <button id="shortUrlCancel"
+            style="padding:8px 18px;border:1.5px solid #ddd;border-radius:6px;background:#f5f5f5;cursor:pointer;font-size:13px;">取消</button>
+          <button id="shortUrlConfirm"
+            style="padding:8px 18px;background:#ff4500;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;">确认分析</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+
+  document.getElementById('shortUrlConfirm').onclick = () => {
+    const v = document.getElementById('shortUrlInput').value.trim();
+    if (!v) { document.getElementById('shortUrlInput').style.borderColor='#e53'; return; }
+    el.remove();
+    onSubmit(v);
+  };
+  document.getElementById('shortUrlCancel').onclick = () => {
+    el.remove();
+    onCancel(new Error('已取消'));
+  };
+  // 回车确认
+  document.getElementById('shortUrlInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('shortUrlConfirm').click();
+  });
+  setTimeout(() => document.getElementById('shortUrlInput')?.focus(), 100);
+}
 function onDataChange() {} // 实时触发可扩展
 
 // ── 评分模型 ──
