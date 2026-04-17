@@ -941,21 +941,30 @@ async function resolveShortUrl(sub, code) {
       showShortUrlHelper(shortUrl, (fullUrl) => {
         const m2 = fullUrl.match(/reddit\.com\/r\/([^/?#]+)\/comments\/([a-z0-9]+)/i);
         if (!m2) { reject(new Error('粘贴的链接不是有效的 Reddit 帖子地址')); return; }
-        fetch(`https://www.reddit.com/r/${m2[1]}/comments/${m2[2]}.json?raw_json=1`,
-              { headers: { Accept: 'application/json' } })
-          .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-          .then(resolve).catch(reject);
+        fetchRedditJson(m2[1], m2[2]).then(resolve).catch(reject);
       }, reject);
     });
   }
 
   // 用真实 ID 拉 JSON
-  const jsonRes = await fetch(
-    `https://www.reddit.com/r/${postSub}/comments/${postId}.json?raw_json=1`,
-    { headers: { Accept: 'application/json' } }
-  );
-  if (!jsonRes.ok) throw new Error('HTTP ' + jsonRes.status);
-  return await jsonRes.json();
+  return await fetchRedditJson(postSub, postId);
+}
+
+async function fetchRedditJson(sub, id) {
+  let res;
+  try {
+    res = await fetch(
+      `https://www.reddit.com/r/${sub}/comments/${id}.json?raw_json=1`,
+      { headers: { Accept: 'application/json' } }
+    );
+  } catch (networkErr) {
+    throw new Error('NETWORK');
+  }
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const text = await res.text();
+  // Reddit 被拦截时返回 HTML（"whoa there, pardner!"），不是 JSON
+  if (text.trimStart().startsWith('<')) throw new Error('BLOCKED');
+  return JSON.parse(text);
 }
 
 async function fetchPost() {
@@ -969,9 +978,7 @@ async function fetchPost() {
     if (p.isShort) {
       data = await resolveShortUrl(p.sub, p.code);
     } else {
-      const res = await fetch(`https://www.reddit.com/r/${p.sub}/comments/${p.id}.json?raw_json=1`, { headers: { Accept: 'application/json' }});
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      data = await res.json();
+      data = await fetchRedditJson(p.sub, p.id);
     }
     const post = data[0].data.children[0].data;
     setFetched('upvotes', post.score);
@@ -993,8 +1000,12 @@ async function fetchPost() {
     currentAuthor = post.author;
     onDataChange();
   } catch(e) {
-    if (e.message !== '已取消')
-      showErr('自动获取失败，请手动填写下方互动数据（或检查链接是否正确）');
+    if (e.message === '已取消') return;
+    if (e.message === 'NETWORK' || e.message === 'BLOCKED') {
+      showErr('⚠️ Reddit 在当前网络无法访问，请开启 VPN / 代理后重试。\n如已开启，请刷新页面重试。');
+    } else {
+      showErr('获取失败：' + e.message + '\n请手动填写下方互动数据。');
+    }
   } finally { setLoading(false); }
 }
 function setFetched(id, val) {
