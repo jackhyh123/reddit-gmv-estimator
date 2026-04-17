@@ -212,6 +212,26 @@ input[type=number]::placeholder { color: #2a2d3a; font-size: 13px; }
 .btn-del { background: none; border: none; color: #2a2d3a; cursor: pointer; font-size: 14px; padding: 2px 5px; border-radius: 4px; }
 .btn-del:hover { color: #ef4444; background: #1a0808; }
 .empty { text-align: center; color: #333; padding: 24px; font-size: 13px; }
+
+/* 品类选择器 */
+.cat-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px; }
+.cat-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 6px 12px; border-radius: 20px; cursor: pointer;
+  background: #0f1117; border: 1.5px solid #252836;
+  font-size: 12px; font-weight: 600; color: #666;
+  transition: all .15s; white-space: nowrap;
+}
+.cat-chip:hover { border-color: #ff450055; color: #ccc; }
+.cat-chip.active { border-color: #ff4500; background: #1a0f08; color: #fff; }
+.cat-chip .chip-samples { font-size: 10px; color: #444; margin-left: 3px; }
+.cat-chip.active .chip-samples { color: #ff4500; }
+.cat-calib {
+  font-size: 11px; color: #444; line-height: 1.6;
+  background: #0f1117; border: 1px solid #1f2230;
+  border-radius: 7px; padding: 8px 11px; margin-bottom: 12px;
+}
+.cat-calib strong { color: #666; }
 </style>
 </head>
 <body>
@@ -260,18 +280,23 @@ input[type=number]::placeholder { color: #2a2d3a; font-size: 13px; }
   <!-- 参数 -->
   <div class="card">
     <div class="section-title">转化参数</div>
+
+    <!-- 品类选择 -->
+    <div class="cat-chips" id="catChips"></div>
+    <div class="cat-calib" id="catCalib"></div>
+
     <div class="rate-presets" id="presets">
-      <button class="preset-btn" onclick="setPreset(0.2, this)">
+      <button class="preset-btn" id="presetLow"  onclick="setPreset('low',  this)">
         <span class="p-label">保守</span>
-        <span class="p-val">0.20% · 新帖参考</span>
+        <span class="p-val" id="presetLowVal">—</span>
       </button>
-      <button class="preset-btn active" onclick="setPreset(0.39, this)">
+      <button class="preset-btn active" id="presetMid" onclick="setPreset('mid', this)">
         <span class="p-label">推荐 ✓</span>
-        <span class="p-val">0.39% · 实测基准</span>
+        <span class="p-val" id="presetMidVal">—</span>
       </button>
-      <button class="preset-btn" onclick="setPreset(0.8, this)">
+      <button class="preset-btn" id="presetHigh" onclick="setPreset('high', this)">
         <span class="p-label">激进</span>
-        <span class="p-val">0.80% · 强互动帖</span>
+        <span class="p-val" id="presetHighVal">—</span>
       </button>
     </div>
     <div class="rate-custom-row">
@@ -414,16 +439,147 @@ input[type=number]::placeholder { color: #2a2d3a; font-size: 13px; }
 </div>
 
 <script>
-// ── 衰减模型（真实数据校准）──
-const DECAY = { 3: 0.098, 5: 0.287, 15: 0.588, 30: 1.0 };
+// ════════════════════════════════════════════════════════════
+//  CATALOG — 品类校准模型
+//  每次新增品类数据后只需在这里添加一个 entry，UI 自动更新。
+//
+//  字段说明：
+//    convRate   实测转化率（%），来自 真实UV ÷ 真实订单
+//    decay      各阶段占 D30 的比例（来自订单时间序列分析）
+//    avgPrice   典型客单价（元），用于快速填充
+//    samples    校准样本帖子数
+//    calibrated 最新校准日期
+//    note       数据来源说明
+//
+//  新增品类流程：
+//    1. 发帖后给我：帖子链接 + 微店销售数据表（同本次格式）
+//    2. 我分析 D1-D30 订单时间序列，计算 decay 和 convRate
+//    3. 在下方添加新 entry，推送更新
+// ════════════════════════════════════════════════════════════
+const CATALOG = {
+
+  // ── 已校准品类 ──────────────────────────────────────────
+
+  'luxury-basics': {
+    id:          'luxury-basics',
+    name:        '奢侈基础款',
+    emoji:       '👔',
+    example:     'Loro Piana knit / polo / linen',
+    convRate:    0.390,
+    avgPrice:    234,
+    decay:       { 3: 0.098, 5: 0.287, 15: 0.588, 30: 1.0 },
+    samples:     3,
+    calibrated:  '2026-03-18',
+    note:        '3帖 · 101单 · 25,929 UV · ¥23,598 GMV · 30天'
+  },
+
+  // ── 待校准品类（数据不足时用通用参数）──────────────────
+
+  'streetwear': {
+    id:          'streetwear',
+    name:        '潮牌 / 街头',
+    emoji:       '🧢',
+    example:     'Stone Island / Supreme / OW',
+    convRate:    null,   // ← 待校准
+    avgPrice:    280,
+    decay:       { 3: 0.12, 5: 0.30, 15: 0.60, 30: 1.0 },  // 通用估算
+    samples:     0,
+    calibrated:  null,
+    note:        '暂无校准数据，使用通用衰减曲线'
+  },
+
+  'accessories': {
+    id:          'accessories',
+    name:        '配饰 / 皮具',
+    emoji:       '👜',
+    example:     'Gucci belt / LV wallet / 包类',
+    convRate:    null,
+    avgPrice:    450,
+    decay:       { 3: 0.08, 5: 0.22, 15: 0.55, 30: 1.0 },  // 配饰长尾更长
+    samples:     0,
+    calibrated:  null,
+    note:        '暂无校准数据，使用通用衰减曲线'
+  },
+
+  'footwear': {
+    id:          'footwear',
+    name:        '鞋类',
+    emoji:       '👟',
+    example:     'Nike / Yeezy / 球鞋',
+    convRate:    null,
+    avgPrice:    380,
+    decay:       { 3: 0.15, 5: 0.35, 15: 0.65, 30: 1.0 },  // 鞋类爆发更快
+    samples:     0,
+    calibrated:  null,
+    note:        '暂无校准数据，使用通用衰减曲线'
+  }
+};
+
+// 当前选中品类
+let currentCatId = 'luxury-basics';
 const KEY = 'reddit_gmv_v5';
 let detailOpen = false;
 
+// ── 品类选择器初始化 ──
+function initCatalog() {
+  const chips = document.getElementById('catChips');
+  chips.innerHTML = '';
+  Object.values(CATALOG).forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = 'cat-chip' + (cat.id === currentCatId ? ' active' : '');
+    btn.innerHTML = `${cat.emoji} ${cat.name}` +
+      `<span class="chip-samples">${cat.samples > 0 ? cat.samples + '帖校准' : '待校准'}</span>`;
+    btn.onclick = () => selectCat(cat.id);
+    chips.appendChild(btn);
+  });
+  updateCatUI();
+}
+
+function selectCat(id) {
+  currentCatId = id;
+  document.querySelectorAll('.cat-chip').forEach((c, i) => {
+    c.classList.toggle('active', Object.keys(CATALOG)[i] === id);
+  });
+  updateCatUI();
+}
+
+function updateCatUI() {
+  const cat = CATALOG[currentCatId];
+  const isCalibrated = cat.samples > 0;
+  const statusIcon = isCalibrated ? '✅' : '⚠️';
+  const statusText = isCalibrated
+    ? `<strong>已校准</strong> ${cat.note}`
+    : `<strong>待校准</strong> ${cat.note} — 发帖后给我帖子链接+销售表，自动更新模型`;
+
+  document.getElementById('catCalib').innerHTML =
+    `${statusIcon} ${cat.emoji} ${cat.name}  ·  ${statusText}`;
+
+  // 更新预设按钮
+  const base = cat.convRate || 0.40;
+  const lo   = +(base * 0.5).toFixed(3);
+  const hi   = +(base * 2.0).toFixed(3);
+  document.getElementById('presetLowVal').textContent  = `${lo}% · 保守`;
+  document.getElementById('presetMidVal').textContent  = `${base}%${isCalibrated ? ' · 实测' : ' · 估算'}`;
+  document.getElementById('presetHighVal').textContent = `${hi}% · 激进`;
+
+  // 默认选推荐档
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('presetMid').classList.add('active');
+  document.getElementById('convRate').value = base;
+
+  // 更新客单价提示
+  const ao = document.getElementById('avgOrder');
+  if (!ao.value) ao.placeholder = cat.avgPrice;
+}
+
 // ── 转化率预设 ──
-function setPreset(val, btn) {
+function setPreset(level, btn) {
+  const cat  = CATALOG[currentCatId];
+  const base = cat.convRate || 0.40;
+  const vals = { low: +(base * 0.5).toFixed(3), mid: base, high: +(base * 2.0).toFixed(3) };
   document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  document.getElementById('convRate').value = val;
+  document.getElementById('convRate').value = vals[level];
 }
 function clearPreset() {
   document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
@@ -577,11 +733,12 @@ function calculate() {
   }, 100);
 
   // 时间线
+  const decay = CATALOG[currentCatId].decay;
   const stages = [
-    { d: 3, decay: DECAY[3],  gmvId: 'tg3',  ordId: 'to3',  fillId: 'tf3'  },
-    { d: 5, decay: DECAY[5],  gmvId: 'tg5',  ordId: 'to5',  fillId: 'tf5'  },
-    { d: 15,decay: DECAY[15], gmvId: 'tg15', ordId: 'to15', fillId: 'tf15' },
-    { d: 30,decay: DECAY[30], gmvId: 'tg30', ordId: 'to30', fillId: 'tf30' },
+    { d: 3, decay: decay[3],  gmvId: 'tg3',  ordId: 'to3',  fillId: 'tf3'  },
+    { d: 5, decay: decay[5],  gmvId: 'tg5',  ordId: 'to5',  fillId: 'tf5'  },
+    { d: 15,decay: decay[15], gmvId: 'tg15', ordId: 'to15', fillId: 'tf15' },
+    { d: 30,decay: decay[30], gmvId: 'tg30', ordId: 'to30', fillId: 'tf30' },
   ];
   stages.forEach(s => {
     const g = Math.round(gmv30 * s.decay);
@@ -607,7 +764,8 @@ function calculate() {
   const sub   = document.getElementById('pSub').textContent || '';
   recs.unshift({
     id: Date.now(), title, sub, V, U, C, score, convRate, avgOrder,
-    gmv30: Math.round(gmv30), d3: Math.round(gmv30*DECAY[3]), d5: Math.round(gmv30*DECAY[5]),
+    catId: currentCatId,
+    gmv30: Math.round(gmv30), d3: Math.round(gmv30*decay[3]), d5: Math.round(gmv30*decay[5]),
     verdict: verdict.level, ts: new Date().toLocaleString('zh-CN')
   });
   save(recs); renderHistory();
@@ -657,7 +815,7 @@ function renderHistory() {
 }
 
 function delRec(id) { save(load().filter(r => r.id !== id)); renderHistory(); }
-window.onload = renderHistory;
+window.onload = function() { initCatalog(); renderHistory(); };
 </script>
 </body>
 </html>
