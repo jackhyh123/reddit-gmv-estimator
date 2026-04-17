@@ -230,6 +230,119 @@ input[type=number]::placeholder { color: #2a2d3a; font-size: 13px; }
 .cat-detected .cd-note { color: #444; font-size: 11px; }
 .cat-detected .cd-calib { margin-left: auto; font-size: 10px; color: #333; white-space: nowrap; }
 
+/* 页面切换导航 */
+.page-nav { display: flex; gap: 6px; background: #1a1d27; border: 1px solid #252836; border-radius: 12px; padding: 5px; margin-bottom: 14px; }
+.pn-btn { flex: 1; padding: 9px 12px; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; background: transparent; color: #444; transition: all .15s; }
+.pn-btn.active { background: #ff4500; color: #fff; }
+.pn-btn:hover:not(.active) { color: #ccc; background: #252836; }
+
+/* 博主追踪按钮（在结果区底部） */
+.track-btn { display: none; width: 100%; margin-top: 12px; padding: 13px; background: #12172a; border: 1.5px solid #2a3050; border-radius: 10px; color: #6c8fff; font-size: 14px; font-weight: 800; cursor: pointer; transition: all .15s; }
+.track-btn.show { display: block; }
+.track-btn:hover { border-color: #4a6cf7; background: #141a30; color: #8aa6ff; }
+
+/* 博主输入 */
+.blogger-input-row { display: flex; gap: 8px; }
+.blogger-input { flex: 1; background: #0f1117; border: 1.5px solid #252836; border-radius: 9px; color: #e8eaf0; font-size: 13px; padding: 11px 13px; outline: none; transition: border-color .15s; }
+.blogger-input:focus { border-color: #6c8fff; }
+.blogger-input::placeholder { color: #2a2d3a; }
+.btn-analyze { background: #4a6cf7; color: #fff; border: none; border-radius: 9px; padding: 0 18px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap; transition: background .15s; }
+.btn-analyze:hover { background: #3a5ce6; }
+.btn-analyze:disabled { background: #2a2d3a; color: #555; cursor: not-allowed; }
+
+/* 博主结果区 */
+#bloggerResult { display: none; }
+
+/* Hero 评分卡 */
+.blogger-hero { border-radius: 14px; padding: 20px 22px 16px; margin-bottom: 12px; border: 2px solid; }
+.blogger-hero.excellent { background: #071c10; border-color: #22c55e55; }
+.blogger-hero.good      { background: #1a1408; border-color: #f59e0b55; }
+.blogger-hero.average   { background: #1a1408; border-color: #f59e0b33; }
+.blogger-hero.weak      { background: #170808; border-color: #ef444455; }
+.bh-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.bh-name { font-size: 18px; font-weight: 900; color: #fff; }
+.bh-sub  { font-size: 11px; color: #444; margin-top: 3px; }
+.bh-ring { width: 60px; height: 60px; border-radius: 50%; border: 3px solid; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 20px; font-weight: 900; flex-shrink: 0; }
+.excellent .bh-ring { border-color: #22c55e; color: #4ade80; }
+.good      .bh-ring { border-color: #f59e0b; color: #fbbf24; }
+.average   .bh-ring { border-color: #f59e0b; color: #fbbf24; }
+.weak      .bh-ring { border-color: #ef4444; color: #f87171; }
+.bh-ring .ring-label { font-size: 9px; color: #555; font-weight: 600; }
+.bh-verdict { font-size: 14px; font-weight: 800; margin-bottom: 8px; }
+.excellent .bh-verdict { color: #4ade80; }
+.good      .bh-verdict { color: #fbbf24; }
+.average   .bh-verdict { color: #fbbf24; }
+.weak      .bh-verdict { color: #f87171; }
+.bh-action { font-size: 12px; color: #666; line-height: 1.6; }
+
+/* 统计数字条 */
+.blogger-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+.bs-pill { background: #1a1d27; border: 1px solid #252836; border-radius: 10px; padding: 12px 8px; text-align: center; }
+.bs-pill .bp-label { font-size: 10px; color: #444; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 5px; }
+.bs-pill .bp-value { font-size: 17px; font-weight: 800; color: #ccc; }
+.bs-pill .bp-sub   { font-size: 10px; color: #333; margin-top: 2px; }
+
+/* 反直觉指标 */
+.signal-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.signal-pill { background: #1a1d27; border: 1px solid #252836; border-radius: 10px; padding: 12px; text-align: center; }
+.signal-pill .sp-label { font-size: 10px; color: #444; font-weight: 700; text-transform: uppercase; margin-bottom: 6px; }
+.signal-pill .sp-value { font-size: 17px; font-weight: 800; margin-bottom: 4px; }
+.signal-pill .sp-desc  { font-size: 10px; color: #444; line-height: 1.4; }
+.signal-good  .sp-value { color: #4ade80; }
+.signal-mid   .sp-value { color: #fbbf24; }
+.signal-weak  .sp-value { color: #f87171; }
+
+/* 博主评分拆解 */
+.blogger-scores { background: #1a1d27; border: 1px solid #252836; border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; }
+.bsc-row { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid #0f1117; }
+.bsc-row:last-child { border-bottom: none; }
+.bsc-icon  { font-size: 14px; width: 20px; flex-shrink: 0; }
+.bsc-label { font-size: 12px; color: #666; width: 72px; flex-shrink: 0; }
+.bsc-detail { font-size: 11px; color: #444; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bsc-bar-wrap { width: 70px; height: 5px; background: #0f1117; border-radius: 3px; overflow: hidden; flex-shrink: 0; }
+.bsc-bar-fill { height: 100%; border-radius: 3px; transition: width 1s ease; }
+.bsc-val { font-size: 11px; font-weight: 700; color: #ccc; width: 38px; text-align: right; flex-shrink: 0; }
+
+/* Top 3 帖子 */
+.top-posts { background: #1a1d27; border: 1px solid #252836; border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; }
+.tp-item { display: flex; gap: 12px; align-items: flex-start; padding: 11px 0; border-bottom: 1px solid #0f1117; }
+.tp-item:last-child { border-bottom: none; padding-bottom: 0; }
+.tp-rank { width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; margin-top: 2px; }
+.tp-rank.r1 { background: #3b1f05; color: #f59e0b; }
+.tp-rank.r2 { background: #1a1d27; color: #888; border: 1px solid #252836; }
+.tp-rank.r3 { background: #1a1d27; color: #666; border: 1px solid #252836; }
+.tp-content { flex: 1; min-width: 0; }
+.tp-title { font-size: 12px; font-weight: 700; color: #ccc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 5px; }
+.tp-title a { color: inherit; text-decoration: none; }
+.tp-title a:hover { color: #fb923c; }
+.tp-meta { display: flex; gap: 10px; flex-wrap: wrap; }
+.tp-meta span { font-size: 11px; color: #444; }
+.tp-meta strong { color: #888; }
+.tp-cat { font-size: 10px; padding: 2px 7px; border-radius: 10px; background: #1a0f08; color: #fb923c; font-weight: 700; }
+
+/* 店铺匹配 */
+.store-match-card { background: #1a1d27; border: 1px solid #252836; border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; }
+.store-input-row { display: flex; gap: 8px; margin-bottom: 0; }
+.store-input { flex: 1; background: #0f1117; border: 1.5px solid #252836; border-radius: 9px; color: #e8eaf0; font-size: 13px; padding: 10px 13px; outline: none; transition: border-color .15s; }
+.store-input:focus { border-color: #4a6cf7; }
+.store-input::placeholder { color: #2a2d3a; }
+.btn-store { background: #252836; color: #888; border: 1px solid #2a2d3a; border-radius: 9px; padding: 0 14px; font-size: 12px; font-weight: 700; cursor: pointer; transition: all .15s; white-space: nowrap; }
+.btn-store:hover { border-color: #4a6cf7; color: #6c8fff; background: #12172a; }
+#storeResult { display: none; margin-top: 12px; }
+.store-platform { display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border-radius: 20px; font-size: 12px; font-weight: 700; margin-bottom: 12px; }
+.plt-weidian  { background: #1a0f08; color: #fb923c; }
+.plt-taobao   { background: #1a0a08; color: #f87171; }
+.plt-shop1688 { background: #071c10; color: #4ade80; }
+.plt-other    { background: #12172a; color: #6c8fff; }
+.match-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.match-item { background: #0f1117; border-radius: 9px; padding: 12px; }
+.match-item .mi-label { font-size: 10px; color: #444; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 6px; }
+.match-item .mi-value { font-size: 20px; font-weight: 800; }
+.match-item .mi-desc  { font-size: 11px; color: #555; margin-top: 4px; line-height: 1.4; }
+.match-high .mi-value { color: #4ade80; }
+.match-mid  .mi-value { color: #fbbf24; }
+.match-low  .mi-value { color: #f87171; }
+
 /* 反淘淘金入口 */
 .fantao-entry {
   display: flex; align-items: center; justify-content: space-between;
@@ -253,6 +366,15 @@ input[type=number]::placeholder { color: #2a2d3a; font-size: 13px; }
 </head>
 <body>
 <div class="wrap">
+
+  <!-- 页面导航 -->
+  <div class="page-nav">
+    <button class="pn-btn active" id="tab-eval"    onclick="switchPage('eval')">📊 帖子评估</button>
+    <button class="pn-btn"        id="tab-blogger" onclick="switchPage('blogger')">👤 博主追踪</button>
+  </div>
+
+  <!-- ══ 页面1：帖子评估 ══ -->
+  <div id="page-eval">
 
   <div class="hd">
     <div class="logo">🔴</div>
@@ -457,6 +579,11 @@ input[type=number]::placeholder { color: #2a2d3a; font-size: 13px; }
       <div class="detail-row"><span>D30 预估订单</span><span class="dv" id="d7">—</span></div>
     </div>
 
+    <!-- 追踪博主 -->
+    <button class="track-btn" id="trackBtn" onclick="trackAuthor()">
+      👤 追踪这位博主 — 查看近30天发帖 · 评分 · 转化潜力分析 →
+    </button>
+
   </div><!-- /result -->
 
   <!-- 历史 -->
@@ -467,6 +594,125 @@ input[type=number]::placeholder { color: #2a2d3a; font-size: 13px; }
     </div>
     <div id="histWrap"><p class="empty">暂无记录，评估第一条帖子后自动保存</p></div>
   </div>
+
+  </div><!-- /page-eval -->
+
+  <!-- ══ 页面2：博主追踪 ══ -->
+  <div id="page-blogger" style="display:none">
+
+    <!-- 输入 -->
+    <div class="card">
+      <div class="section-title">博主追踪分析</div>
+      <div class="blogger-input-row">
+        <input class="blogger-input" id="bloggerInput"
+          placeholder="输入 Reddit 用户名（如 username，不需要 u/）..."
+          onkeydown="if(event.key==='Enter') analyzeBlogger()">
+        <button class="btn-analyze" id="analyzeBtn" onclick="analyzeBlogger()">
+          <div class="spinner" id="blogSpinner"></div>
+          <span id="analyzeLabel">分析</span>
+        </button>
+      </div>
+      <div class="err" id="blogErr"></div>
+    </div>
+
+    <!-- 结果区 -->
+    <div id="bloggerResult">
+
+      <!-- Hero 评分卡 -->
+      <div class="blogger-hero" id="bloggerHero">
+        <div class="bh-top">
+          <div>
+            <div class="bh-name" id="bhName">—</div>
+            <div class="bh-sub"  id="bhSub">—</div>
+          </div>
+          <div class="bh-ring" id="bhRing">
+            <span id="bhScore">—</span>
+            <span class="ring-label">/ 100</span>
+          </div>
+        </div>
+        <div class="bh-verdict" id="bhVerdict">—</div>
+        <div class="bh-action"  id="bhAction">—</div>
+      </div>
+
+      <!-- 统计数字 -->
+      <div class="blogger-stats">
+        <div class="bs-pill"><div class="bp-label">30天发帖</div><div class="bp-value" id="bs-posts">—</div><div class="bp-sub">篇</div></div>
+        <div class="bs-pill"><div class="bp-label">发帖频率</div><div class="bp-value" id="bs-freq">—</div><div class="bp-sub">篇/周</div></div>
+        <div class="bs-pill"><div class="bp-label">平均点赞</div><div class="bp-value" id="bs-avgUp">—</div><div class="bp-sub">upvotes</div></div>
+        <div class="bs-pill"><div class="bp-label">平均评论</div><div class="bp-value" id="bs-avgCmt">—</div><div class="bp-sub">comments</div></div>
+      </div>
+
+      <!-- 反直觉核心指标 -->
+      <div class="signal-row">
+        <div class="signal-pill" id="sig-cu">
+          <div class="sp-label">评论 / 点赞比</div>
+          <div class="sp-value" id="sv-cu">—</div>
+          <div class="sp-desc">越高 = 内容越能引发讨论 → 高 GMV 信号</div>
+        </div>
+        <div class="signal-pill" id="sig-viral">
+          <div class="sp-label">爆帖率</div>
+          <div class="sp-value" id="sv-viral">—</div>
+          <div class="sp-desc">&gt;100 赞帖子占比</div>
+        </div>
+        <div class="signal-pill" id="sig-cat">
+          <div class="sp-label">主力领域</div>
+          <div class="sp-value" id="sv-cat">—</div>
+          <div class="sp-desc">发帖最多的品类</div>
+        </div>
+      </div>
+
+      <!-- 评分拆解 -->
+      <div class="blogger-scores">
+        <div class="section-title" style="margin-bottom:12px">博主评分拆解</div>
+        <div class="bsc-row">
+          <span class="bsc-icon">🔥</span>
+          <span class="bsc-label">爆帖率</span>
+          <span class="bsc-detail" id="bsc-d1">—</span>
+          <div class="bsc-bar-wrap"><div class="bsc-bar-fill" id="bsc-b1" style="background:#ff4500;width:0"></div></div>
+          <span class="bsc-val" id="bsc-v1">— /25</span>
+        </div>
+        <div class="bsc-row">
+          <span class="bsc-icon">📅</span>
+          <span class="bsc-label">稳定性</span>
+          <span class="bsc-detail" id="bsc-d2">—</span>
+          <div class="bsc-bar-wrap"><div class="bsc-bar-fill" id="bsc-b2" style="background:#3b82f6;width:0"></div></div>
+          <span class="bsc-val" id="bsc-v2">— /25</span>
+        </div>
+        <div class="bsc-row">
+          <span class="bsc-icon">💬</span>
+          <span class="bsc-label">转化潜力</span>
+          <span class="bsc-detail" id="bsc-d3">—</span>
+          <div class="bsc-bar-wrap"><div class="bsc-bar-fill" id="bsc-b3" style="background:#f59e0b;width:0"></div></div>
+          <span class="bsc-val" id="bsc-v3">— /30</span>
+        </div>
+        <div class="bsc-row">
+          <span class="bsc-icon">🎯</span>
+          <span class="bsc-label">领域匹配</span>
+          <span class="bsc-detail" id="bsc-d4">—</span>
+          <div class="bsc-bar-wrap"><div class="bsc-bar-fill" id="bsc-b4" style="background:#22c55e;width:0"></div></div>
+          <span class="bsc-val" id="bsc-v4">— /20</span>
+        </div>
+      </div>
+
+      <!-- Top 3 质量帖子 -->
+      <div class="top-posts">
+        <div class="section-title" style="margin-bottom:12px">近30天质量最高帖子 TOP 3</div>
+        <div id="topPostsWrap"></div>
+      </div>
+
+      <!-- 店铺匹配 -->
+      <div class="store-match-card">
+        <div class="section-title" style="margin-bottom:12px">店铺匹配分析</div>
+        <div class="store-input-row">
+          <input class="store-input" id="storeUrl" placeholder="粘贴你的微店 / 淘宝 / 1688 主页链接...">
+          <button class="btn-store" onclick="analyzeStore()">分析匹配</button>
+        </div>
+        <div id="storeResult"></div>
+      </div>
+
+    </div><!-- /bloggerResult -->
+
+  </div><!-- /page-blogger -->
 
 </div>
 
@@ -549,6 +795,7 @@ const CATALOG = {
 
 // 当前选中品类
 let currentCatId = 'luxury-basics';
+let currentAuthor = '';
 const KEY = 'reddit_gmv_v5';
 let detailOpen = false;
 
@@ -645,6 +892,8 @@ async function fetchPost() {
     // 自动识别品类
     const catId = detectCategory(post.title, post.subreddit);
     applyCategory(catId, 'auto');
+    // 保存作者供博主追踪使用
+    currentAuthor = post.author;
     onDataChange();
   } catch(e) {
     showErr('自动获取失败，请手动填写下方互动数据');
@@ -791,6 +1040,15 @@ function calculate() {
   document.getElementById('d6').textContent  = V.toLocaleString() + ' UV';
   document.getElementById('d7').textContent  = orders30.toFixed(1) + ' 单';
 
+  // 追踪博主按钮（仅当有作者时显示）
+  const tb = document.getElementById('trackBtn');
+  if (currentAuthor) {
+    tb.textContent = `👤 追踪博主 u/${currentAuthor} — 查看近30天发帖 · 评分 · 转化潜力 →`;
+    tb.classList.add('show');
+  } else {
+    tb.classList.remove('show');
+  }
+
   // 存历史
   const title = document.getElementById('pTitle').textContent || document.getElementById('url').value || '手动输入';
   const sub   = document.getElementById('pSub').textContent || '';
@@ -847,6 +1105,265 @@ function renderHistory() {
 }
 
 function delRec(id) { save(load().filter(r => r.id !== id)); renderHistory(); }
+
+// ════════════════════════════════════════════════════════════
+//  页面切换
+// ════════════════════════════════════════════════════════════
+function switchPage(page) {
+  document.getElementById('page-eval').style.display    = page === 'eval'    ? 'block' : 'none';
+  document.getElementById('page-blogger').style.display = page === 'blogger' ? 'block' : 'none';
+  document.getElementById('tab-eval').classList.toggle('active',    page === 'eval');
+  document.getElementById('tab-blogger').classList.toggle('active', page === 'blogger');
+}
+
+function trackAuthor() {
+  if (!currentAuthor) return;
+  document.getElementById('bloggerInput').value = currentAuthor;
+  switchPage('blogger');
+  analyzeBlogger();
+}
+
+// ════════════════════════════════════════════════════════════
+//  博主分析
+// ════════════════════════════════════════════════════════════
+async function analyzeBlogger() {
+  const raw = document.getElementById('bloggerInput').value.trim().replace(/^u\//, '');
+  if (!raw) return;
+  setBlogLoading(true);
+  document.getElementById('blogErr').style.display = 'none';
+  document.getElementById('bloggerResult').style.display = 'none';
+
+  try {
+    const res = await fetch(
+      `https://www.reddit.com/user/${encodeURIComponent(raw)}/submitted.json?limit=100&raw_json=1`,
+      { headers: { Accept: 'application/json' } }
+    );
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    const all  = data.data.children.map(c => c.data);
+    const now  = Date.now() / 1000;
+    const posts = all.filter(p => (now - p.created_utc) <= 30 * 86400);
+
+    if (!posts.length && all.length) {
+      renderBlogger(raw, all.slice(0, 20), true);  // 近期低活，用历史数据
+    } else if (!posts.length) {
+      showBlogErr('该用户暂无近期发帖记录，请确认用户名是否正确');
+    } else {
+      renderBlogger(raw, posts, false);
+    }
+  } catch(e) {
+    showBlogErr('获取失败，请检查用户名是否正确（不需要加 u/）');
+  } finally {
+    setBlogLoading(false);
+  }
+}
+
+function renderBlogger(username, posts, isSparse) {
+  const total  = posts.length;
+  const now    = Date.now() / 1000;
+  const avgUp  = Math.round(posts.reduce((s,p) => s + p.score, 0) / total);
+  const avgCmt = Math.round(posts.reduce((s,p) => s + p.num_comments, 0) / total);
+  const avgCU  = posts.reduce((s,p) => s + p.num_comments / Math.max(p.score, 1), 0) / total;
+  const weekFreq = (total / 4.3).toFixed(1);
+
+  // 爆帖率（>100赞）
+  const viralPosts = posts.filter(p => p.score >= 100);
+  const viralRate  = viralPosts.length / total;
+
+  // ── 博主评分 ──
+
+  // 🔥 爆帖率 25pts：25% viral → 满分
+  const s1 = Math.min(25, Math.round(viralRate / 0.25 * 25));
+
+  // 📅 稳定性 25pts：周分布均匀性 + 频率
+  const weeks = [0, 0, 0, 0];
+  posts.forEach(p => {
+    const w = Math.min(3, Math.floor((now - p.created_utc) / (7 * 86400)));
+    weeks[w]++;
+  });
+  const wMean = weeks.reduce((a,b) => a+b,0) / 4;
+  const wVar  = weeks.reduce((s,w) => s + Math.pow(w - wMean, 2), 0) / 4;
+  const cv    = wMean > 0 ? Math.sqrt(wVar) / wMean : 1;
+  const consistency  = Math.max(0, 1 - cv);
+  const freqScore    = Math.min(15, Math.round(+weekFreq * 5));
+  const s2 = Math.min(25, freqScore + Math.round(consistency * 10));
+
+  // 💬 转化潜力 30pts：评论/点赞比 ≥ 15% → 满分（高讨论 = 高 GMV）
+  const s3 = Math.min(30, Math.round(avgCU / 0.15 * 30));
+
+  // 🎯 领域匹配 20pts：奢侈/潮流相关品类帖子占比 ≥ 50% → 满分
+  const fashionCats = new Set(['luxury-basics', 'streetwear', 'accessories', 'footwear']);
+  const matched  = posts.filter(p => fashionCats.has(detectCategory(p.title, p.subreddit)));
+  const matchRate = matched.length / total;
+  const s4 = Math.min(20, Math.round(matchRate / 0.5 * 20));
+
+  const totalScore = s1 + s2 + s3 + s4;
+
+  // 主力领域
+  const catCounts = {};
+  posts.forEach(p => { const c = detectCategory(p.title, p.subreddit); catCounts[c] = (catCounts[c]||0)+1; });
+  const topCatId = Object.entries(catCounts).sort((a,b)=>b[1]-a[1])[0]?.[0] || 'luxury-basics';
+  const topCat   = CATALOG[topCatId] || CATALOG['luxury-basics'];
+
+  // Top 3 质量帖子（质量分 = 点赞×0.4 + 评论×2×0.4 + 评论/赞比×100×0.2）
+  const top3 = posts.map(p => ({
+    ...p, quality: p.score * 0.4 + p.num_comments * 2 * 0.4 + (p.num_comments / Math.max(p.score,1)) * 100 * 0.2
+  })).sort((a,b) => b.quality - a.quality).slice(0, 3);
+
+  // 决策
+  let level, verdict, action;
+  if (totalScore >= 75) {
+    level = 'excellent';
+    verdict = '🌟 顶级博主 — 强烈推荐建立合作';
+    action = '持续高频输出 + 爆帖率强 + 评论互动优质。建议主动私信合作，提供专属折扣码追踪效果，可带来稳定 GMV。';
+  } else if (totalScore >= 55) {
+    level = 'good';
+    verdict = '💛 优质博主 — 值得深度运营';
+    action = '整体数据良好，有一定爆帖能力。建议先在评论区互动建立关系，观察 2 周后谈合作，注意追踪转化漏斗。';
+  } else if (totalScore >= 35) {
+    level = 'average';
+    verdict = '🔶 普通博主 — 可低成本尝试';
+    action = '互动数据一般，适合以免费寄样替代高额佣金做小成本试合作，重点观察爆帖频率趋势。';
+  } else {
+    level = 'weak';
+    verdict = '⬇️ 暂不建议 — 继续观察';
+    action = '近期数据偏弱，可能处于低活跃期或起号阶段。建议收藏观察 1–2 个月再评估。';
+  }
+
+  // ── 渲染 ──
+  document.getElementById('bloggerResult').style.display = 'block';
+
+  const hero = document.getElementById('bloggerHero');
+  hero.className = `blogger-hero ${level}`;
+  document.getElementById('bhName').textContent    = `u/${username}`;
+  document.getElementById('bhSub').textContent     = isSparse ? `（近30天活跃度低，展示最近 ${total} 篇）` : `近30天 ${total} 篇帖子`;
+  document.getElementById('bhScore').textContent   = totalScore;
+  document.getElementById('bhVerdict').textContent = verdict;
+  document.getElementById('bhAction').textContent  = action;
+
+  document.getElementById('bs-posts').textContent  = total;
+  document.getElementById('bs-freq').textContent   = weekFreq;
+  document.getElementById('bs-avgUp').textContent  = avgUp.toLocaleString();
+  document.getElementById('bs-avgCmt').textContent = avgCmt;
+
+  // 反直觉指标
+  const cuClass    = avgCU >= 0.15 ? 'signal-good' : avgCU >= 0.07 ? 'signal-mid' : 'signal-weak';
+  const viralClass = viralRate >= 0.25 ? 'signal-good' : viralRate >= 0.10 ? 'signal-mid' : 'signal-weak';
+  document.getElementById('sig-cu').className    = `signal-pill ${cuClass}`;
+  document.getElementById('sig-viral').className = `signal-pill ${viralClass}`;
+  document.getElementById('sig-cat').className   = 'signal-pill signal-mid';
+  document.getElementById('sv-cu').textContent    = (avgCU * 100).toFixed(1) + '%';
+  document.getElementById('sv-viral').textContent = (viralRate * 100).toFixed(0) + '%';
+  document.getElementById('sv-cat').textContent   = topCat.emoji;
+
+  // 评分拆解
+  setTimeout(() => {
+    document.getElementById('bsc-b1').style.width = (s1 / 25 * 100) + '%';
+    document.getElementById('bsc-b2').style.width = (s2 / 25 * 100) + '%';
+    document.getElementById('bsc-b3').style.width = (s3 / 30 * 100) + '%';
+    document.getElementById('bsc-b4').style.width = (s4 / 20 * 100) + '%';
+  }, 100);
+  document.getElementById('bsc-v1').textContent = `${s1} /25`;
+  document.getElementById('bsc-v2').textContent = `${s2} /25`;
+  document.getElementById('bsc-v3').textContent = `${s3} /30`;
+  document.getElementById('bsc-v4').textContent = `${s4} /20`;
+  document.getElementById('bsc-d1').textContent = `${viralPosts.length}/${total} 篇 >100赞（${(viralRate*100).toFixed(0)}%）`;
+  document.getElementById('bsc-d2').textContent = `均 ${weekFreq} 篇/周 · 稳定性 ${(consistency*100).toFixed(0)}%`;
+  document.getElementById('bsc-d3').textContent = `评论/赞比 ${(avgCU*100).toFixed(1)}%（${avgCU>=0.15?'强讨论驱动 🔥':avgCU>=0.07?'一般':'偏低'}）`;
+  document.getElementById('bsc-d4').textContent = `${matched.length}/${total} 篇匹配时尚品类`;
+
+  // Top 3
+  const rankClass = ['r1','r2','r3'];
+  let html = '';
+  top3.forEach((p, i) => {
+    const cat  = CATALOG[detectCategory(p.title, p.subreddit)] || CATALOG['luxury-basics'];
+    const cu   = (p.num_comments / Math.max(p.score, 1) * 100).toFixed(1);
+    const date = new Date(p.created_utc * 1000).toLocaleDateString('zh-CN');
+    html += `<div class="tp-item">
+      <div class="tp-rank ${rankClass[i]}">${i+1}</div>
+      <div class="tp-content">
+        <div class="tp-title"><a href="https://reddit.com${p.permalink}" target="_blank">${p.title}</a></div>
+        <div class="tp-meta">
+          <span>👍 <strong>${p.score.toLocaleString()}</strong></span>
+          <span>💬 <strong>${p.num_comments}</strong></span>
+          <span>评论/赞 <strong>${cu}%</strong></span>
+          <span>r/${p.subreddit}</span>
+          <span>${date}</span>
+          <span class="tp-cat">${cat.emoji} ${cat.name}</span>
+        </div>
+      </div>
+    </div>`;
+  });
+  document.getElementById('topPostsWrap').innerHTML = html;
+  document.getElementById('bloggerResult').scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+// ── 店铺匹配 ──
+function analyzeStore() {
+  const url = document.getElementById('storeUrl').value.trim();
+  if (!url) return;
+
+  let platLabel, platClass, storeType;
+  if (/weidian\.com/.test(url)) {
+    platLabel = '🛍️ 微店'; platClass = 'plt-weidian'; storeType = 'retail';
+  } else if (/taobao\.com|tmall\.com/.test(url)) {
+    platLabel = '🟠 淘宝'; platClass = 'plt-taobao'; storeType = 'retail';
+  } else if (/1688\.com/.test(url)) {
+    platLabel = '🟢 1688'; platClass = 'plt-shop1688'; storeType = 'wholesale';
+  } else {
+    platLabel = '🔗 其他平台'; platClass = 'plt-other'; storeType = 'retail';
+  }
+
+  const bhScore    = +document.getElementById('bhScore').textContent || 0;
+  const topCatEmoji = document.getElementById('sv-cat').textContent || '—';
+  const viralTxt   = document.getElementById('sv-viral').textContent || '0%';
+  const viralNum   = parseFloat(viralTxt) || 0;
+  const cuTxt      = document.getElementById('sv-cu').textContent || '0%';
+  const cuNum      = parseFloat(cuTxt) || 0;
+
+  // 匹配分：博主评分 × 平台系数
+  const platFactor = storeType === 'wholesale' ? 0.7 : 0.85;
+  const matchScore = Math.min(95, Math.round(bhScore * platFactor + 10));
+  const matchClass = matchScore >= 70 ? 'match-high' : matchScore >= 45 ? 'match-mid' : 'match-low';
+  const matchText  = matchScore >= 70 ? '高度匹配' : matchScore >= 45 ? '基本匹配' : '匹配较弱';
+
+  const advMap = {
+    'plt-shop1688': `1688 供货商适合批量起订。该博主爆帖率 ${viralTxt}，若带货稳定可谈独家供货协议降低成本，建议先小批量测单。`,
+    'plt-weidian':  `微店适合快速起量。该博主评论/赞比 ${cuTxt}，讨论活跃度${cuNum>=15?'强':'一般'}，建议提供专属折扣码追踪实际转化，初次合作免费寄样。`,
+    'plt-taobao':   `淘宝店铺建议用 UTM 参数追踪博主带来的流量，该博主评论互动 ${cuTxt}，转化信号${cuNum>=15?'强':'一般'}，可优先测试爆帖商品的预热投放。`,
+    'plt-other':    `建议提供独立落地页 + 折扣码追踪该博主转化，避免数据混淆。`
+  };
+  const advice = advMap[platClass] || advMap['plt-other'];
+
+  const result = document.getElementById('storeResult');
+  result.style.display = 'block';
+  result.innerHTML = `
+    <div class="store-platform ${platClass}">${platLabel}</div>
+    <div class="match-grid">
+      <div class="match-item ${matchClass}">
+        <div class="mi-label">综合匹配度</div>
+        <div class="mi-value">${matchScore}%</div>
+        <div class="mi-desc">${matchText} — 基于博主评分 + 发帖风格</div>
+      </div>
+      <div class="match-item">
+        <div class="mi-label">博主主力品类</div>
+        <div class="mi-value" style="font-size:26px">${topCatEmoji}</div>
+        <div class="mi-desc">爆帖率 ${viralTxt} · 评论/赞 ${cuTxt}</div>
+      </div>
+      <div class="match-item" style="grid-column:1/-1">
+        <div class="mi-label">合作建议</div>
+        <div class="mi-value" style="font-size:12px;font-weight:600;color:#aaa;line-height:1.6">${advice}</div>
+      </div>
+    </div>`;
+}
+
+function showBlogErr(m) { const e = document.getElementById('blogErr'); e.textContent = m; e.style.display = 'block'; }
+function setBlogLoading(on) {
+  document.getElementById('blogSpinner').style.display = on ? 'block' : 'none';
+  document.getElementById('analyzeLabel').textContent  = on ? '分析中...' : '分析';
+  document.getElementById('analyzeBtn').disabled = on;
+}
+
 window.onload = function() { applyCategory('luxury-basics', 'default'); renderHistory(); };
 </script>
 </body>
