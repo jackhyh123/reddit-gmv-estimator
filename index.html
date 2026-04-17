@@ -13,13 +13,10 @@ body {
   color: #e8eaf0;
   padding: 32px 16px;
 }
-.wrap { max-width: 680px; margin: 0 auto; }
+.wrap { max-width: 720px; margin: 0 auto; }
 
 /* 标题 */
-.hd {
-  display: flex; align-items: center; gap: 12px;
-  margin-bottom: 28px;
-}
+.hd { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
 .logo {
   width: 36px; height: 36px; border-radius: 50%;
   background: #ff4500;
@@ -31,75 +28,55 @@ body {
 
 /* 卡片 */
 .card {
-  background: #1a1d27;
-  border: 1px solid #252836;
-  border-radius: 14px;
-  padding: 22px;
-  margin-bottom: 14px;
+  background: #1a1d27; border: 1px solid #252836;
+  border-radius: 14px; padding: 20px 22px; margin-bottom: 14px;
 }
 .card-label {
   font-size: 11px; font-weight: 700; color: #555;
-  text-transform: uppercase; letter-spacing: 1px;
-  margin-bottom: 16px;
+  text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px;
 }
 
-/* URL 行 */
+/* URL */
 .url-row { display: flex; gap: 8px; }
 .url-input {
-  flex: 1;
-  background: #0f1117; border: 1.5px solid #252836;
-  border-radius: 9px; color: #e8eaf0;
-  font-size: 13px; padding: 11px 13px;
+  flex: 1; background: #0f1117; border: 1.5px solid #252836;
+  border-radius: 9px; color: #e8eaf0; font-size: 13px; padding: 11px 13px;
   outline: none; transition: border-color .15s;
 }
 .url-input:focus { border-color: #ff4500; }
 .url-input::placeholder { color: #333; }
 .btn-fetch {
-  background: #ff4500; color: #fff;
-  border: none; border-radius: 9px;
-  padding: 0 18px; font-size: 13px; font-weight: 700;
-  cursor: pointer; white-space: nowrap;
-  display: flex; align-items: center; gap: 6px;
-  transition: background .15s;
+  background: #ff4500; color: #fff; border: none; border-radius: 9px;
+  padding: 0 18px; font-size: 13px; font-weight: 700; cursor: pointer;
+  display: flex; align-items: center; gap: 6px; transition: background .15s; white-space: nowrap;
 }
 .btn-fetch:hover { background: #e03d00; }
 .btn-fetch:disabled { background: #2a2d3a; color: #555; cursor: not-allowed; }
 .spinner {
   width: 13px; height: 13px;
-  border: 2px solid rgba(255,255,255,.25);
-  border-top-color: #fff; border-radius: 50%;
-  animation: spin .6s linear infinite; display: none;
+  border: 2px solid rgba(255,255,255,.25); border-top-color: #fff;
+  border-radius: 50%; animation: spin .6s linear infinite; display: none;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* 帖子预览 */
 .post-preview {
-  display: none;
-  background: #0f1117; border: 1px solid #252836;
-  border-radius: 9px; padding: 12px 14px;
-  margin-top: 12px;
+  display: none; background: #0f1117; border: 1px solid #252836;
+  border-radius: 9px; padding: 12px 14px; margin-top: 12px;
 }
 .preview-sub   { font-size: 11px; color: #ff4500; font-weight: 700; margin-bottom: 3px; }
-.preview-title { font-size: 14px; font-weight: 700; color: #e8eaf0; margin-bottom: 10px; line-height: 1.4; }
+.preview-title { font-size: 14px; font-weight: 700; color: #e8eaf0; margin-bottom: 8px; line-height: 1.4; }
 .preview-meta  { display: flex; gap: 16px; flex-wrap: wrap; }
 .preview-meta span { font-size: 12px; color: #555; }
-.preview-meta strong { color: #bbb; }
+.preview-meta strong { color: #ccc; }
 
-/* 数字输入组 */
-.input-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 12px;
-}
+/* 输入网格 */
+.input-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
 .field label {
   display: flex; align-items: center; gap: 5px;
-  font-size: 12px; color: #555; font-weight: 600;
-  margin-bottom: 7px;
+  font-size: 12px; color: #555; font-weight: 600; margin-bottom: 7px;
 }
-.fetched-dot {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: #ff4500; display: none; flex-shrink: 0;
-}
+.dot { width: 6px; height: 6px; border-radius: 50%; background: #ff4500; display: none; flex-shrink: 0; }
 input[type=number] {
   width: 100%; padding: 10px 11px;
   background: #0f1117; border: 1.5px solid #252836;
@@ -109,18 +86,17 @@ input[type=number] {
 }
 input[type=number]::-webkit-inner-spin-button { display: none; }
 input[type=number]:focus { border-color: #ff4500; }
-input[type=number].fetched { border-color: #ff450066; }
+input[type=number].fetched { border-color: #ff450055; background: #1a0f08; }
 input[type=number]::placeholder { color: #2a2d3a; font-size: 13px; }
+.hint-text { font-size: 11px; color: #444; margin-top: 5px; line-height: 1.5; }
 
 /* 错误 */
 .err {
   display: none; margin-top: 10px;
   background: #1a0808; border: 1px solid #ef444433;
-  border-radius: 8px; padding: 9px 13px;
-  font-size: 12px; color: #f87171;
+  border-radius: 8px; padding: 9px 13px; font-size: 12px; color: #f87171;
 }
 
-/* 分隔 */
 hr { border: none; border-top: 1px solid #1f2230; margin: 16px 0; }
 
 /* 主按钮 */
@@ -128,86 +104,108 @@ hr { border: none; border-top: 1px solid #1f2230; margin: 16px 0; }
   width: 100%; padding: 14px;
   background: linear-gradient(135deg, #ff4500 0%, #ff6d3a 100%);
   color: #fff; border: none; border-radius: 10px;
-  font-size: 15px; font-weight: 800;
-  cursor: pointer; transition: opacity .15s;
-  letter-spacing: .3px;
+  font-size: 15px; font-weight: 800; cursor: pointer; transition: opacity .15s;
 }
 .btn-main:hover { opacity: .9; }
 
 /* 信号灯 */
 .signal {
-  display: none; border-radius: 9px;
-  padding: 11px 15px; font-size: 13px; font-weight: 600;
-  border: 1px solid; margin-bottom: 14px;
+  display: none; border-radius: 9px; padding: 10px 15px;
+  font-size: 13px; font-weight: 600; border: 1px solid; margin-bottom: 14px;
 }
 .signal.green  { background: #071c10; border-color: #22c55e44; color: #4ade80; }
 .signal.yellow { background: #1a150a; border-color: #f59e0b44; color: #fbbf24; }
 .signal.red    { background: #1a0a0a; border-color: #ef444444; color: #f87171; }
 
-/* 结果 3格 */
-.result-grid {
-  display: grid; grid-template-columns: repeat(3, 1fr);
-  gap: 10px; margin-bottom: 14px;
-}
-.result-box {
-  background: #0f1117; border: 1px solid #252836;
-  border-radius: 10px; padding: 16px 12px;
-  text-align: center;
-}
-.result-box .r-label { font-size: 11px; color: #555; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
-.result-box .r-value { font-size: 24px; font-weight: 900; color: #fff; line-height: 1; }
-.result-box .r-sub   { font-size: 11px; color: #444; margin-top: 5px; }
-.result-box.hi .r-value { color: #4ade80; }
+/* ── 结果区 ── */
+#result { display: none; }
 
-/* 展开计算 */
+/* 流量条 */
+.uv-bar {
+  background: #0f1117; border: 1px solid #252836; border-radius: 10px;
+  padding: 14px 16px; margin-bottom: 14px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.uv-bar .uv-label { font-size: 12px; color: #555; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+.uv-bar .uv-value { font-size: 22px; font-weight: 900; color: #ff4500; }
+.uv-bar .uv-sub   { font-size: 11px; color: #444; margin-top: 3px; }
+
+/* D3/D5/D15/D30 时间轴 */
+.timeline {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.stage-card {
+  background: #0f1117; border: 1px solid #252836;
+  border-radius: 12px; padding: 16px 12px;
+  text-align: center; position: relative; overflow: hidden;
+}
+.stage-card::before {
+  content: ''; position: absolute; bottom: 0; left: 0;
+  width: 100%; background: #ff450015;
+  transition: height .6s cubic-bezier(.4,0,.2,1);
+}
+.stage-card .s-day   { font-size: 11px; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+.stage-card .s-gmv   { font-size: 20px; font-weight: 900; color: #4ade80; line-height: 1; margin-bottom: 4px; }
+.stage-card .s-order { font-size: 12px; color: #888; margin-bottom: 6px; }
+.stage-card .s-pct   { font-size: 11px; color: #444; }
+.stage-card .s-bar   {
+  height: 4px; border-radius: 2px; background: #1f2230;
+  margin-top: 10px; overflow: hidden;
+}
+.stage-card .s-bar-fill {
+  height: 100%; border-radius: 2px; background: linear-gradient(90deg, #ff4500, #4ade80);
+  transition: width .8s cubic-bezier(.4,0,.2,1);
+  width: 0;
+}
+/* GMV 趋势折线（简单CSS） */
+.trend-wrap { margin-bottom: 14px; }
+.trend-label {
+  font-size: 11px; color: #555; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1px; margin-bottom: 10px;
+}
+.trend-svg { width: 100%; height: 80px; }
+
+/* 展开详情 */
 .detail-toggle {
-  background: none; border: none; color: #444;
-  font-size: 12px; cursor: pointer; padding: 0;
-  display: flex; align-items: center; gap: 4px;
-  margin: 0 auto 12px; text-decoration: underline;
+  background: none; border: none; color: #444; font-size: 12px;
+  cursor: pointer; text-decoration: underline; margin: 4px auto 12px;
+  display: flex; align-items: center; gap: 4px; padding: 0;
 }
 .detail-toggle:hover { color: #888; }
 .detail-box {
-  display: none;
-  background: #0f1117; border: 1px solid #1f2230;
-  border-radius: 9px; padding: 14px;
-  margin-bottom: 14px; font-size: 12px;
+  display: none; background: #0f1117; border: 1px solid #1f2230;
+  border-radius: 9px; padding: 14px; margin-bottom: 14px; font-size: 12px;
 }
 .detail-row {
-  display: flex; justify-content: space-between;
-  align-items: center; padding: 6px 0;
-  border-bottom: 1px solid #1a1d27; color: #666;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 5px 0; border-bottom: 1px solid #1a1d27; color: #555;
 }
 .detail-row:last-child { border-bottom: none; }
-.detail-row .d-val { color: #bbb; font-weight: 700; }
+.detail-row .dv { color: #bbb; font-weight: 700; }
 
 /* 历史 */
 .hist-table { width: 100%; border-collapse: collapse; font-size: 12px; }
 .hist-table th {
-  padding: 9px 10px; text-align: left;
-  color: #444; font-weight: 700;
-  border-bottom: 1px solid #1f2230;
-  white-space: nowrap;
+  padding: 9px 10px; text-align: left; color: #444; font-weight: 700;
+  border-bottom: 1px solid #1f2230; white-space: nowrap;
 }
-.hist-table td {
-  padding: 9px 10px;
-  border-bottom: 1px solid #161820;
-  color: #888; vertical-align: middle;
-}
+.hist-table td { padding: 9px 10px; border-bottom: 1px solid #161820; color: #888; vertical-align: middle; }
 .hist-table tr:last-child td { border-bottom: none; }
 .hist-table tr:hover td { background: #1a1d27; }
-.hist-table .title-cell {
-  color: #ccc; font-weight: 600; font-size: 12px;
-  max-width: 160px; overflow: hidden;
-  text-overflow: ellipsis; white-space: nowrap;
-}
-.hist-table .gmv-val { color: #60a5fa; font-weight: 700; }
-.btn-del {
-  background: none; border: none; color: #2a2d3a;
-  cursor: pointer; font-size: 15px; padding: 2px 5px; border-radius: 4px;
-}
+.hist-gmv { color: #4ade80; font-weight: 700; }
+.btn-del { background: none; border: none; color: #2a2d3a; cursor: pointer; font-size: 15px; padding: 2px 5px; border-radius: 4px; }
 .btn-del:hover { color: #ef4444; background: #1a0808; }
 .empty { text-align: center; color: #333; padding: 28px; font-size: 13px; }
+
+/* 数据来源标注 */
+.calibration-note {
+  background: #071c10; border: 1px solid #22c55e33;
+  border-radius: 8px; padding: 10px 14px; margin-bottom: 14px;
+  font-size: 12px; color: #4ade8088; line-height: 1.6;
+}
 </style>
 </head>
 <body>
@@ -217,16 +215,16 @@ hr { border: none; border-top: 1px solid #1f2230; margin: 16px 0; }
     <div class="logo">🔴</div>
     <div>
       <h1>Reddit GMV 预估器</h1>
-      <p>发帖前预测这条帖子能带来多少 GMV</p>
+      <p>输入帖子链接 → 预测 D3 / D5 / D15 / D30 GMV</p>
     </div>
   </div>
 
-  <!-- 帖子数据 -->
+  <!-- Step 1 帖子 -->
   <div class="card">
-    <div class="card-label">帖子数据</div>
+    <div class="card-label">帖子链接</div>
     <div class="url-row">
       <input class="url-input" id="url"
-        placeholder="粘贴 Reddit 帖子链接（自动获取数据）"
+        placeholder="https://www.reddit.com/r/stockholmreps/comments/..."
         onkeydown="if(event.key==='Enter') fetchPost()">
       <button class="btn-fetch" id="fetchBtn" onclick="fetchPost()">
         <div class="spinner" id="spinner"></div>
@@ -242,34 +240,36 @@ hr { border: none; border-top: 1px solid #1f2230; margin: 16px 0; }
     <hr>
     <div class="input-row">
       <div class="field">
-        <label><span class="fetched-dot" id="dot-upvotes"></span>点赞数</label>
-        <input type="number" id="upvotes" placeholder="159" min="0" oninput="onDataChange()">
+        <label><span class="dot" id="dot-u"></span>点赞数</label>
+        <input type="number" id="upvotes" placeholder="171" min="0" oninput="onDataChange()">
       </div>
       <div class="field">
-        <label><span class="fetched-dot" id="dot-comments"></span>评论数</label>
-        <input type="number" id="comments" placeholder="21" min="0" oninput="onDataChange()">
+        <label><span class="dot" id="dot-c"></span>评论数</label>
+        <input type="number" id="comments" placeholder="25" min="0" oninput="onDataChange()">
       </div>
       <div class="field">
-        <label><span class="fetched-dot" id="dot-ratio"></span>点赞率 %</label>
-        <input type="number" id="ratio" placeholder="98.2" min="0" max="100" step="0.1" oninput="onDataChange()">
+        <label><span class="dot" id="dot-r"></span>点赞率 %</label>
+        <input type="number" id="ratio" placeholder="98" min="0" max="100" step="0.1" oninput="onDataChange()">
       </div>
     </div>
   </div>
 
-  <!-- 经验值 -->
+  <!-- Step 2 参数 -->
   <div class="card">
-    <div class="card-label">你的经验值</div>
+    <div class="card-label">转化参数</div>
     <div class="input-row">
       <div class="field">
         <label>历史转化率 %</label>
-        <input type="number" id="convRate" placeholder="0.05" min="0" step="0.001">
+        <input type="number" id="convRate" value="0.390" min="0" step="0.001">
+        <div class="hint-text">实测值 0.390%<br>（101单 / 25,929 UV）</div>
       </div>
       <div class="field">
         <label>客单价（元）</label>
-        <input type="number" id="avgOrder" placeholder="400" min="0" step="1">
+        <input type="number" id="avgOrder" placeholder="240" min="0" step="1">
+        <div class="hint-text">实测混合均价 ≈ ¥234<br>（knit ¥220 / polo ¥260）</div>
       </div>
       <div class="field" style="display:flex;flex-direction:column;justify-content:flex-end">
-        <button class="btn-main" onclick="calculate()">预估 GMV →</button>
+        <button class="btn-main" onclick="calculate()">预测 GMV →</button>
       </div>
     </div>
   </div>
@@ -278,51 +278,112 @@ hr { border: none; border-top: 1px solid #1f2230; margin: 16px 0; }
   <div class="signal" id="signal"></div>
 
   <!-- 结果 -->
-  <div id="result" style="display:none">
-    <div class="result-grid">
-      <div class="result-box">
-        <div class="r-label">估算流量</div>
-        <div class="r-value" id="r-traffic">—</div>
-        <div class="r-sub">UV</div>
+  <div id="result">
+
+    <div class="calibration-note" id="calibNote"></div>
+
+    <!-- 估算流量 -->
+    <div class="uv-bar">
+      <div>
+        <div class="uv-label">估算流量</div>
+        <div class="uv-sub" id="uv-sub">单帖 UV</div>
       </div>
-      <div class="result-box">
-        <div class="r-label">预估订单</div>
-        <div class="r-value" id="r-orders">—</div>
-        <div class="r-sub">笔</div>
-      </div>
-      <div class="result-box hi">
-        <div class="r-label">预估 GMV</div>
-        <div class="r-value" id="r-gmv">—</div>
-        <div class="r-sub" id="r-sub">元</div>
+      <div style="text-align:right">
+        <div class="uv-value" id="r-uv">—</div>
+        <div class="uv-sub" id="uv-formula">模型估算</div>
       </div>
     </div>
+
+    <!-- D3/D5/D15/D30 时间轴 -->
+    <div class="card" style="padding:16px 20px">
+      <div class="card-label">GMV 增长时间线</div>
+
+      <!-- 进度条可视化 -->
+      <div style="margin-bottom:18px">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:#444;margin-bottom:6px">
+          <span>D1</span><span>D5</span><span>D15</span><span>D30</span>
+        </div>
+        <div style="height:8px;background:#1f2230;border-radius:4px;position:relative;overflow:visible">
+          <div id="prog-bar" style="height:100%;border-radius:4px;background:linear-gradient(90deg,#ff4500,#4ade80);width:0;transition:width 1s ease"></div>
+          <div id="prog-d3"  style="position:absolute;top:-3px;width:14px;height:14px;border-radius:50%;background:#ff4500;border:2px solid #0f1117;transform:translateX(-50%);transition:left 1s ease;left:0"></div>
+          <div id="prog-d5"  style="position:absolute;top:-3px;width:14px;height:14px;border-radius:50%;background:#f59e0b;border:2px solid #0f1117;transform:translateX(-50%);transition:left 1s ease;left:0"></div>
+          <div id="prog-d15" style="position:absolute;top:-3px;width:14px;height:14px;border-radius:50%;background:#3b82f6;border:2px solid #0f1117;transform:translateX(-50%);transition:left 1s ease;left:0"></div>
+          <div id="prog-d30" style="position:absolute;top:-3px;width:14px;height:14px;border-radius:50%;background:#4ade80;border:2px solid #0f1117;transform:translateX(-50%);transition:left 1s ease;left:0"></div>
+        </div>
+      </div>
+
+      <!-- 4格卡片 -->
+      <div class="timeline">
+        <div class="stage-card" id="card-d3">
+          <div class="s-day">📅 D3</div>
+          <div class="s-gmv" id="gmv-d3" style="color:#ff4500">—</div>
+          <div class="s-order" id="ord-d3">—</div>
+          <div class="s-pct" id="pct-d3">9.8% of D30</div>
+          <div class="s-bar"><div class="s-bar-fill" id="bar-d3" style="width:9.8%"></div></div>
+        </div>
+        <div class="stage-card" id="card-d5">
+          <div class="s-day">📅 D5</div>
+          <div class="s-gmv" id="gmv-d5" style="color:#f59e0b">—</div>
+          <div class="s-order" id="ord-d5">—</div>
+          <div class="s-pct" id="pct-d5">28.7% of D30</div>
+          <div class="s-bar"><div class="s-bar-fill" id="bar-d5" style="width:28.7%"></div></div>
+        </div>
+        <div class="stage-card" id="card-d15">
+          <div class="s-day">📅 D15</div>
+          <div class="s-gmv" id="gmv-d15" style="color:#3b82f6">—</div>
+          <div class="s-order" id="ord-d15">—</div>
+          <div class="s-pct" id="pct-d15">58.8% of D30</div>
+          <div class="s-bar"><div class="s-bar-fill" id="bar-d15" style="width:58.8%"></div></div>
+        </div>
+        <div class="stage-card" id="card-d30">
+          <div class="s-day">📅 D30</div>
+          <div class="s-gmv" id="gmv-d30" style="color:#4ade80">—</div>
+          <div class="s-order" id="ord-d30">—</div>
+          <div class="s-pct">100% · 参考基准</div>
+          <div class="s-bar"><div class="s-bar-fill" id="bar-d30" style="width:100%"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 展开计算 -->
     <button class="detail-toggle" onclick="toggleDetail()">展开计算过程 ▾</button>
     <div class="detail-box" id="detailBox">
-      <div class="detail-row"><span>前2h 估算点赞 × 50</span><span class="d-val" id="d1">—</span></div>
-      <div class="detail-row"><span>前2h 估算评论 × 100</span><span class="d-val" id="d2">—</span></div>
-      <div class="detail-row"><span>互动初始分 S</span><span class="d-val" id="d3">—</span></div>
-      <div class="detail-row"><span>质量过滤 S × 点赞率</span><span class="d-val" id="d4">—</span></div>
-      <div class="detail-row"><span>分发放大 × F（自动判断）</span><span class="d-val" id="d5">—</span></div>
-      <div class="detail-row"><span>估算总流量 UV</span><span class="d-val" id="d6">—</span></div>
+      <div class="detail-row"><span>前2h 估算点赞 (U×20%)</span><span class="dv" id="d1">—</span></div>
+      <div class="detail-row"><span>前2h 估算评论 (C×25%)</span><span class="dv" id="d2">—</span></div>
+      <div class="detail-row"><span>互动初始分 S = U2h×50 + C2h×100</span><span class="dv" id="d3c">—</span></div>
+      <div class="detail-row"><span>质量过滤 S₂ = S × 点赞率</span><span class="dv" id="d4">—</span></div>
+      <div class="detail-row"><span>分发倍数 F（自动判断）</span><span class="dv" id="d5c">—</span></div>
+      <div class="detail-row"><span>估算流量 V = S₂ × F</span><span class="dv" id="d6">—</span></div>
+      <div class="detail-row"><span>D30 预估订单 = V × 转化率</span><span class="dv" id="d7">—</span></div>
+      <div class="detail-row"><span>D30 预估 GMV = 订单 × 客单价</span><span class="dv" id="d8">—</span></div>
     </div>
-  </div>
 
-  <!-- 历史记录 -->
+  </div><!-- /result -->
+
+  <!-- 历史 -->
   <div class="card">
     <div class="card-label">历史记录</div>
     <div id="histWrap"><p class="empty">暂无记录</p></div>
   </div>
 
-</div>
+</div><!-- /wrap -->
+
 <script>
-const KEY = 'reddit_gmv_v3';
+// ── 衰减模型（来自真实数据校准）──
+// 实测：101单, ¥23,598, 30天
+// D3=9.8%  D5=28.7%  D15=58.8%  D30=100%
+const DECAY = { 3: 0.098, 5: 0.287, 15: 0.588, 30: 1.0 };
+
+const KEY = 'reddit_gmv_v4';
 let detailOpen = false;
 
+// ── URL 解析 ──
 function parseUrl(url) {
   const m = url.match(/reddit\.com\/r\/([^/]+)\/comments\/([a-z0-9]+)/i);
   return m ? { sub: m[1], id: m[2] } : null;
 }
 
+// ── 自动抓取 ──
 async function fetchPost() {
   const url = document.getElementById('url').value.trim();
   if (!url) return;
@@ -331,7 +392,7 @@ async function fetchPost() {
   setLoading(true); hideErr();
   try {
     const res = await fetch(
-      `https://www.reddit.com/r/${p.sub}/comments/${p.id}.json?raw_json=1&limit=1`,
+      `https://www.reddit.com/r/${p.sub}/comments/${p.id}.json?raw_json=1`,
       { headers: { Accept: 'application/json' } }
     );
     if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -346,18 +407,19 @@ async function fetchPost() {
       `<span>👍 <strong>${post.score.toLocaleString()}</strong></span>
        <span>💬 <strong>${post.num_comments}</strong></span>
        <span>📊 <strong>${(post.upvote_ratio*100).toFixed(1)}%</strong></span>
-       <span>🕐 <strong>${new Date(post.created_utc*1000).toLocaleDateString('zh-CN')}</strong></span>`;
+       <span>🕐 <strong>${new Date(post.created_utc*1000).toLocaleDateString('zh-CN')}</strong></span>
+       <span>👥 <strong>${post.subreddit_subscribers.toLocaleString()}</strong> 订阅</span>`;
     document.getElementById('preview').style.display = 'block';
     onDataChange();
   } catch(e) {
-    showErr('自动获取失败，请手动填写下方数字');
+    showErr('自动获取失败，请手动填写点赞数、评论数、点赞率');
   } finally { setLoading(false); }
 }
 
 function setFetched(id, val) {
   const el = document.getElementById(id);
   el.value = val; el.className = 'fetched';
-  document.getElementById('dot-' + id).style.display = 'inline-block';
+  document.getElementById('dot-' + (id==='upvotes'?'u':id==='comments'?'c':'r')).style.display = 'inline-block';
 }
 function setLoading(on) {
   document.getElementById('spinner').style.display = on ? 'block' : 'none';
@@ -367,68 +429,119 @@ function setLoading(on) {
 function showErr(msg) { const e = document.getElementById('err'); e.textContent = msg; e.style.display = 'block'; }
 function hideErr()    { document.getElementById('err').style.display = 'none'; }
 
+// ── 信号灯 ──
 function onDataChange() {
   const U = +document.getElementById('upvotes').value  || 0;
   const C = +document.getElementById('comments').value || 0;
   const R = +document.getElementById('ratio').value    || 95;
   const sig = document.getElementById('signal');
   const u2h = U * 0.20, c2h = C * 0.25;
+  if (!U) { sig.style.display = 'none'; return; }
   if (u2h >= 20 && c2h >= 5 && R >= 95) {
     sig.className = 'signal green';
-    sig.textContent = '绿灯 — 早期互动强劲，预计突破万次流量';
+    sig.innerHTML = '🟢 <strong>绿灯</strong> — 强互动，预计可破万UV，参考同类帖 D5 GMV 约占30天总量的 29%';
   } else if (u2h >= 8 || c2h >= 2) {
     sig.className = 'signal yellow';
-    sig.textContent = '黄灯 — 互动一般，可尝试在评论区引导更多互动';
-  } else if (U > 0) {
+    sig.innerHTML = '🟡 <strong>黄灯</strong> — 互动中等，建议在评论区补充产品链接引导转化';
+  } else {
     sig.className = 'signal red';
-    sig.textContent = '红灯 — 互动偏弱，建议检查发帖时间或标题吸引力';
-  } else { sig.style.display = 'none'; return; }
+    sig.innerHTML = '🔴 <strong>红灯</strong> — 互动偏弱，前2小时是关键，建议检查发帖时间（UTC 14:00-20:00效果最佳）';
+  }
   sig.style.display = 'block';
 }
 
+// ── 流量模型 ──
 function autoF(u2h, c2h) {
-  if (u2h >= 40 && c2h >= 12) return 12;
-  if (u2h >= 20 && c2h >= 5)  return 8;
-  return 5;
+  if (u2h >= 40 && c2h >= 12) return 12; // 爆帖
+  if (u2h >= 20)               return 8;  // 不错
+  return 5;                               // 普通
 }
 
+// ── 主计算 ──
 function calculate() {
   const U        = +document.getElementById('upvotes').value;
   const C        = +document.getElementById('comments').value;
   const R        = (+document.getElementById('ratio').value || 95) / 100;
   const convRate = +document.getElementById('convRate').value;
   const avgOrder = +document.getElementById('avgOrder').value;
+
   if (!U && !C)  { alert('请填写点赞数或评论数'); return; }
   if (!convRate) { alert('请填写历史转化率'); return; }
   if (!avgOrder) { alert('请填写客单价'); return; }
 
+  // 流量估算
   const u2h = U * 0.20, c2h = C * 0.25;
   const F   = autoF(u2h, c2h);
   const S   = Math.round(u2h * 50 + c2h * 100);
   const S2  = Math.round(S * R);
   const V   = Math.round(S2 * F);
-  const orders = +(V * convRate / 100).toFixed(1);
-  const gmv    = Math.round(orders * avgOrder);
 
-  document.getElementById('r-traffic').textContent = V.toLocaleString();
-  document.getElementById('r-orders').textContent  = orders % 1 === 0 ? orders : orders.toFixed(1);
-  document.getElementById('r-gmv').textContent     = '¥' + gmv.toLocaleString();
-  document.getElementById('r-sub').textContent     = `客单价 ¥${avgOrder}`;
-  document.getElementById('result').style.display  = 'block';
+  // D30 基准
+  const orders30 = V * convRate / 100;
+  const gmv30    = orders30 * avgOrder;
 
-  document.getElementById('d1').textContent = `${u2h.toFixed(1)} × 50 = ${Math.round(u2h*50).toLocaleString()}`;
-  document.getElementById('d2').textContent = `${c2h.toFixed(1)} × 100 = ${Math.round(c2h*100).toLocaleString()}`;
-  document.getElementById('d3').textContent = S.toLocaleString();
-  document.getElementById('d4').textContent = `${S.toLocaleString()} × ${(R*100).toFixed(1)}% = ${S2.toLocaleString()}`;
-  document.getElementById('d5').textContent = `F = ${F}（${F===5?'普通':F===8?'不错':'爆帖'}）`;
-  document.getElementById('d6').textContent = V.toLocaleString() + ' UV';
+  // 各阶段
+  const stages = [
+    { d: 3,  decay: DECAY[3],  id: 'd3',  color: '#ff4500' },
+    { d: 5,  decay: DECAY[5],  id: 'd5',  color: '#f59e0b' },
+    { d: 15, decay: DECAY[15], id: 'd15', color: '#3b82f6' },
+    { d: 30, decay: DECAY[30], id: 'd30', color: '#4ade80' },
+  ];
 
+  document.getElementById('result').style.display = 'block';
+  document.getElementById('r-uv').textContent     = V.toLocaleString() + ' UV';
+  document.getElementById('uv-formula').textContent = `S₂(${S2.toLocaleString()}) × F(${F})`;
+  document.getElementById('uv-sub').textContent   = `点赞${U} × 评论${C} → 互动分${S.toLocaleString()}`;
+
+  // 校准说明
+  document.getElementById('calibNote').innerHTML =
+    `✅ <strong>数据已用真实帖子校准</strong>：2026-03-18 三帖合计 25,929 UV → 101单 → ¥23,598 GMV（30天）` +
+    `&emsp;|&emsp;综合转化率 <strong>0.390%</strong>&emsp;|&emsp;衰减曲线：D3=9.8%  D5=28.7%  D15=58.8%  D30=100%`;
+
+  // 渲染时间卡
+  stages.forEach(s => {
+    const g = Math.round(gmv30 * s.decay);
+    const o = (orders30 * s.decay).toFixed(1);
+    document.getElementById(`gmv-${s.id}`).textContent   = '¥' + g.toLocaleString();
+    document.getElementById(`ord-${s.id}`).textContent   = `≈ ${o} 单`;
+    // 进度条
+    const bar = document.getElementById(`bar-${s.id}`);
+    if (bar) {
+      setTimeout(() => { bar.style.width = (s.decay * 100) + '%'; }, 100);
+    }
+  });
+
+  // 进度条节点定位
+  setTimeout(() => {
+    document.getElementById('prog-bar').style.width = '100%';
+    document.getElementById('prog-d3').style.left   = '10%';
+    document.getElementById('prog-d5').style.left   = '16.7%';
+    document.getElementById('prog-d15').style.left  = '50%';
+    document.getElementById('prog-d30').style.left  = '100%';
+  }, 200);
+
+  // 计算详情
+  document.getElementById('d1').textContent  = `${u2h.toFixed(1)} 赞/h`;
+  document.getElementById('d2').textContent  = `${c2h.toFixed(1)} 评/h`;
+  document.getElementById('d3c').textContent = S.toLocaleString();
+  document.getElementById('d4').textContent  = `${S2.toLocaleString()} (×${(R*100).toFixed(1)}%)`;
+  document.getElementById('d5c').textContent = `F=${F}（${F===5?'普通帖':F===8?'不错，有热度':'爆帖！'}）`;
+  document.getElementById('d6').textContent  = V.toLocaleString() + ' UV';
+  document.getElementById('d7').textContent  = orders30.toFixed(1) + ' 单';
+  document.getElementById('d8').textContent  = '¥' + Math.round(gmv30).toLocaleString();
+
+  // 保存历史
   const title = document.getElementById('pTitle').textContent ||
                 document.getElementById('url').value || '手动输入';
   const sub   = document.getElementById('pSub').textContent || '';
   const recs  = load();
-  recs.unshift({ id: Date.now(), title, sub, V, U, convRate, avgOrder, orders, gmv,
-                 ts: new Date().toLocaleString('zh-CN') });
+  recs.unshift({
+    id: Date.now(), title, sub, V, U, C, convRate, avgOrder,
+    gmv30: Math.round(gmv30), orders30: orders30.toFixed(1),
+    d3: Math.round(gmv30*DECAY[3]), d5: Math.round(gmv30*DECAY[5]),
+    d15: Math.round(gmv30*DECAY[15]),
+    ts: new Date().toLocaleString('zh-CN')
+  });
   save(recs); renderHistory();
   document.getElementById('result').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
@@ -440,6 +553,7 @@ function toggleDetail() {
     detailOpen ? '收起计算过程 ▴' : '展开计算过程 ▾';
 }
 
+// ── 历史 ──
 function load() { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch { return []; } }
 function save(r) { localStorage.setItem(KEY, JSON.stringify(r)); }
 
@@ -448,15 +562,18 @@ function renderHistory() {
   const wrap = document.getElementById('histWrap');
   if (!recs.length) { wrap.innerHTML = '<p class="empty">暂无记录</p>'; return; }
   let h = `<table class="hist-table"><thead><tr>
-    <th>帖子</th><th>估算流量</th><th>转化率</th><th>预估GMV</th><th></th>
+    <th>帖子</th><th>流量UV</th><th>D3 GMV</th><th>D5 GMV</th><th>D30 GMV</th><th></th>
   </tr></thead><tbody>`;
   for (const r of recs) {
     h += `<tr>
-      <td><div class="title-cell" title="${r.title}">${r.title}</div>
-          <div style="font-size:11px;color:#444">${r.sub} · ${r.ts}</div></td>
+      <td>
+        <div style="color:#ccc;font-weight:600;font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.title}">${r.title}</div>
+        <div style="font-size:11px;color:#444">${r.sub} · ${r.ts}</div>
+      </td>
       <td>${Number(r.V).toLocaleString()}</td>
-      <td>${r.convRate}%</td>
-      <td class="gmv-val">¥${Number(r.gmv).toLocaleString()}</td>
+      <td class="hist-gmv" style="color:#ff4500">¥${Number(r.d3).toLocaleString()}</td>
+      <td class="hist-gmv" style="color:#f59e0b">¥${Number(r.d5).toLocaleString()}</td>
+      <td class="hist-gmv">¥${Number(r.gmv30).toLocaleString()}</td>
       <td><button class="btn-del" onclick="delRec(${r.id})">×</button></td>
     </tr>`;
   }
