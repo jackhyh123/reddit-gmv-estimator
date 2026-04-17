@@ -213,25 +213,42 @@ input[type=number]::placeholder { color: #2a2d3a; font-size: 13px; }
 .btn-del:hover { color: #ef4444; background: #1a0808; }
 .empty { text-align: center; color: #333; padding: 24px; font-size: 13px; }
 
-/* 品类选择器 */
-.cat-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px; }
-.cat-chip {
-  display: inline-flex; align-items: center; gap: 5px;
-  padding: 6px 12px; border-radius: 20px; cursor: pointer;
-  background: #0f1117; border: 1.5px solid #252836;
-  font-size: 12px; font-weight: 600; color: #666;
-  transition: all .15s; white-space: nowrap;
-}
-.cat-chip:hover { border-color: #ff450055; color: #ccc; }
-.cat-chip.active { border-color: #ff4500; background: #1a0f08; color: #fff; }
-.cat-chip .chip-samples { font-size: 10px; color: #444; margin-left: 3px; }
-.cat-chip.active .chip-samples { color: #ff4500; }
-.cat-calib {
-  font-size: 11px; color: #444; line-height: 1.6;
+/* 品类自动识别标签 */
+.cat-detected {
+  display: none; align-items: center; gap: 8px;
   background: #0f1117; border: 1px solid #1f2230;
-  border-radius: 7px; padding: 8px 11px; margin-bottom: 12px;
+  border-radius: 8px; padding: 9px 13px; margin-bottom: 12px;
+  font-size: 12px; color: #555;
 }
-.cat-calib strong { color: #666; }
+.cat-detected.show { display: flex; }
+.cat-detected .cd-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: #1a0f08; border: 1.5px solid #ff450033;
+  border-radius: 20px; padding: 3px 10px;
+  font-size: 12px; font-weight: 700; color: #fb923c; white-space: nowrap;
+}
+.cat-detected .cd-note { color: #444; font-size: 11px; }
+.cat-detected .cd-calib { margin-left: auto; font-size: 10px; color: #333; white-space: nowrap; }
+
+/* 反淘淘金入口 */
+.fantao-entry {
+  display: flex; align-items: center; justify-content: space-between;
+  background: linear-gradient(135deg, #12172a, #1a1d27);
+  border: 1px solid #2a3050; border-radius: 12px;
+  padding: 14px 18px; margin-bottom: 12px;
+  text-decoration: none; transition: border-color .15s, background .15s;
+}
+.fantao-entry:hover { border-color: #4a6cf7; background: linear-gradient(135deg, #141a30, #1e2235); }
+.fantao-entry .fe-left { display: flex; align-items: center; gap: 11px; }
+.fantao-entry .fe-icon {
+  width: 36px; height: 36px; border-radius: 9px;
+  background: linear-gradient(135deg, #4a6cf7, #6c8fff);
+  display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0;
+}
+.fantao-entry .fe-title { font-size: 14px; font-weight: 800; color: #d0d8ff; }
+.fantao-entry .fe-desc  { font-size: 11px; color: #445; margin-top: 2px; }
+.fantao-entry .fe-arrow { font-size: 18px; color: #3a4a80; transition: transform .15s; }
+.fantao-entry:hover .fe-arrow { transform: translateX(3px); color: #6c8fff; }
 </style>
 </head>
 <body>
@@ -244,6 +261,18 @@ input[type=number]::placeholder { color: #2a2d3a; font-size: 13px; }
       <p>帖子链接 → 评分 + 决策 + D3/D5/D15/D30 GMV 预测</p>
     </div>
   </div>
+
+  <!-- 反淘淘金入口 -->
+  <a class="fantao-entry" href="https://xcn8pgdlg8x0.feishu.cn/base/HBq8bRILLaGwNPssyxdcjFdkn4c?from=from_copylink" target="_blank" id="fantaoEntry">
+    <div class="fe-left">
+      <div class="fe-icon">📊</div>
+      <div>
+        <div class="fe-title">反淘淘金</div>
+        <div class="fe-desc">查看完整数据报告 · 更多帖子分析 · 选品参考</div>
+      </div>
+    </div>
+    <div class="fe-arrow">›</div>
+  </a>
 
   <!-- 输入 -->
   <div class="card">
@@ -281,9 +310,12 @@ input[type=number]::placeholder { color: #2a2d3a; font-size: 13px; }
   <div class="card">
     <div class="section-title">转化参数</div>
 
-    <!-- 品类选择 -->
-    <div class="cat-chips" id="catChips"></div>
-    <div class="cat-calib" id="catCalib"></div>
+    <!-- 品类自动识别 -->
+    <div class="cat-detected" id="catDetected">
+      <div class="cd-badge" id="catBadge">👔 奢侈基础款</div>
+      <div class="cd-note" id="catNote">✨ 自动识别</div>
+      <div class="cd-calib" id="catCalib"></div>
+    </div>
 
     <div class="rate-presets" id="presets">
       <button class="preset-btn" id="presetLow"  onclick="setPreset('low',  this)">
@@ -520,54 +552,51 @@ let currentCatId = 'luxury-basics';
 const KEY = 'reddit_gmv_v5';
 let detailOpen = false;
 
-// ── 品类选择器初始化 ──
-function initCatalog() {
-  const chips = document.getElementById('catChips');
-  chips.innerHTML = '';
-  Object.values(CATALOG).forEach(cat => {
-    const btn = document.createElement('button');
-    btn.className = 'cat-chip' + (cat.id === currentCatId ? ' active' : '');
-    btn.innerHTML = `${cat.emoji} ${cat.name}` +
-      `<span class="chip-samples">${cat.samples > 0 ? cat.samples + '帖校准' : '待校准'}</span>`;
-    btn.onclick = () => selectCat(cat.id);
-    chips.appendChild(btn);
-  });
-  updateCatUI();
+// ── 品类自动识别 ──
+function detectCategory(title, sub) {
+  const t = (title + ' ' + sub).toLowerCase();
+
+  // 鞋类
+  if (/\b(nike|yeezy|jordan|adidas|new\s?balance|\bnb\b|shoe|sneaker|boot|loafer|trainer|dunk|air\s?max|samba|gazelle|asics|vans|converse|footwear|kicks)\b/.test(t))
+    return 'footwear';
+
+  // 配饰 / 皮具
+  if (/\b(belt|wallet|bag|purse|card\s?holder|bifold|trifold|clutch|tote|backpack|messenger|crossbody|gucci|louis\s?vuitton|\blv\b|prada|celine|leather\s?good|accessory|accessories)\b/.test(t))
+    return 'accessories';
+
+  // 潮牌 / 街头
+  if (/\b(stone\s?island|supreme|off.white|\bOW\b|bape|palace|stussy|kenzo|ami\b|hoodie|sweatshirt|graphic\s?tee|streetwear|hypebeast|fleece|crewneck)\b/.test(t))
+    return 'streetwear';
+
+  // 默认：奢侈基础款（Loro Piana / 高端针织 / polo / linen 等）
+  return 'luxury-basics';
 }
 
-function selectCat(id) {
+function applyCategory(id, source) {
   currentCatId = id;
-  document.querySelectorAll('.cat-chip').forEach((c, i) => {
-    c.classList.toggle('active', Object.keys(CATALOG)[i] === id);
-  });
-  updateCatUI();
-}
-
-function updateCatUI() {
-  const cat = CATALOG[currentCatId];
+  const cat = CATALOG[id];
   const isCalibrated = cat.samples > 0;
-  const statusIcon = isCalibrated ? '✅' : '⚠️';
-  const statusText = isCalibrated
-    ? `<strong>已校准</strong> ${cat.note}`
-    : `<strong>待校准</strong> ${cat.note} — 发帖后给我帖子链接+销售表，自动更新模型`;
 
-  document.getElementById('catCalib').innerHTML =
-    `${statusIcon} ${cat.emoji} ${cat.name}  ·  ${statusText}`;
+  // 显示识别标签
+  const detected = document.getElementById('catDetected');
+  detected.classList.add('show');
+  document.getElementById('catBadge').textContent   = `${cat.emoji} ${cat.name}`;
+  document.getElementById('catNote').textContent    = source === 'auto' ? '✨ 自动识别' : '📌 默认品类';
+  document.getElementById('catCalib').textContent   =
+    isCalibrated ? `✅ ${cat.samples}帖已校准` : '⚠️ 待校准';
 
   // 更新预设按钮
   const base = cat.convRate || 0.40;
   const lo   = +(base * 0.5).toFixed(3);
   const hi   = +(base * 2.0).toFixed(3);
-  document.getElementById('presetLowVal').textContent  = `${lo}% · 保守`;
-  document.getElementById('presetMidVal').textContent  = `${base}%${isCalibrated ? ' · 实测' : ' · 估算'}`;
-  document.getElementById('presetHighVal').textContent = `${hi}% · 激进`;
+  document.getElementById('presetLowVal').textContent  = `${lo}%`;
+  document.getElementById('presetMidVal').textContent  = `${base}%${isCalibrated ? ' · 实测' : ''}`;
+  document.getElementById('presetHighVal').textContent = `${hi}%`;
 
-  // 默认选推荐档
   document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('presetMid').classList.add('active');
   document.getElementById('convRate').value = base;
 
-  // 更新客单价提示
   const ao = document.getElementById('avgOrder');
   if (!ao.value) ao.placeholder = cat.avgPrice;
 }
@@ -613,6 +642,9 @@ async function fetchPost() {
        <span>🕐 <strong>${new Date(post.created_utc*1000).toLocaleDateString('zh-CN')}</strong></span>
        <span>👥 <strong>${post.subreddit_subscribers.toLocaleString()}</strong> 订阅</span>`;
     document.getElementById('preview').style.display = 'block';
+    // 自动识别品类
+    const catId = detectCategory(post.title, post.subreddit);
+    applyCategory(catId, 'auto');
     onDataChange();
   } catch(e) {
     showErr('自动获取失败，请手动填写下方互动数据');
@@ -815,7 +847,7 @@ function renderHistory() {
 }
 
 function delRec(id) { save(load().filter(r => r.id !== id)); renderHistory(); }
-window.onload = function() { initCatalog(); renderHistory(); };
+window.onload = function() { applyCategory('luxury-basics', 'default'); renderHistory(); };
 </script>
 </body>
 </html>
