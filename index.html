@@ -915,20 +915,54 @@ function parseUrl(url) {
 }
 
 async function resolveShortUrl(sub, code) {
-  // Step 1: fetch 短链接（HTML 重定向），拿到 response.url（最终真实 URL）
-  // 短链接加 .json 不被 Reddit 识别，所以先拿 HTML 拿到最终地址
-  const htmlRes = await fetch(
-    `https://www.reddit.com/r/${sub}/s/${code}`,
-    { headers: { Accept: 'text/html,*/*' }, redirect: 'follow' }
-  );
-  // response.url 是最终 URL，如 /r/xxx/comments/1p1zuuq/title/
-  const finalUrl = htmlRes.url;
-  const m = finalUrl.match(/reddit\.com\/r\/([^/?#]+)\/comments\/([a-z0-9]+)/i);
-  if (!m) throw new Error(`无法从重定向 URL 中解析帖子 ID（${finalUrl.slice(0,80)}）`);
+  const shortUrl = `https://www.reddit.com/r/${sub}/s/${code}`;
 
-  // Step 2: 用真实 ID 拉 JSON
+  // 优先：通过本地服务器解析（绕过浏览器 CORS 限制）
+  let postSub, postId;
+  try {
+    const localRes = await fetch(
+      `http://127.0.0.1:5678/resolve?url=${encodeURIComponent(shortUrl)}`,
+      { signal: AbortSignal.timeout(8000) }
+    );
+    if (localRes.ok) {
+      const localData = await localRes.json();
+      if (localData.success) {
+        postSub = localData.sub;
+        postId  = localData.id;
+      }
+    }
+  } catch (_) {
+    // 本地服务器未启动，忽略错误，继续尝试备用方案
+  }
+
+  // 备用：直接 fetch 短链接，读 response.url（本机可能 CORS 通过）
+  if (!postId) {
+    try {
+      const htmlRes = await fetch(shortUrl, {
+        headers: { Accept: 'text/html,*/*' },
+        redirect: 'follow',
+        mode: 'no-cors'
+      });
+      // no-cors 模式下 response.url 也可能为空，尝试读取
+      const finalUrl = htmlRes.url;
+      if (finalUrl) {
+        const m2 = finalUrl.match(/reddit\.com\/r\/([^/?#]+)\/comments\/([a-z0-9]+)/i);
+        if (m2) { postSub = m2[1]; postId = m2[2]; }
+      }
+    } catch (_) {}
+  }
+
+  if (!postId) {
+    throw new Error(
+      '无法解析手机分享短链接。\n\n' +
+      '请启动本地服务器（在终端运行 python store_server.py），\n' +
+      '或将短链接在浏览器中打开后，复制完整 URL 再粘贴。'
+    );
+  }
+
+  // 用真实 ID 拉 JSON
   const jsonRes = await fetch(
-    `https://www.reddit.com/r/${m[1]}/comments/${m[2]}.json?raw_json=1`,
+    `https://www.reddit.com/r/${postSub}/comments/${postId}.json?raw_json=1`,
     { headers: { Accept: 'application/json' } }
   );
   if (!jsonRes.ok) throw new Error('HTTP ' + jsonRes.status);

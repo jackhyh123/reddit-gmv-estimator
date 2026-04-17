@@ -19,6 +19,7 @@ import asyncio
 import json
 import re
 import sys
+import urllib.request
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
@@ -447,7 +448,44 @@ async def do_scrape(url: str, blogger_cats: dict) -> dict:
 
 @app.route('/health')
 def health():
-    return jsonify({'status': 'ok', 'version': '1.1'})
+    return jsonify({'status': 'ok', 'version': '1.2'})
+
+
+@app.route('/resolve', methods=['GET', 'OPTIONS'])
+def resolve_reddit_url():
+    """
+    解析 Reddit 短链接（/r/sub/s/code）→ 返回完整帖子 ID 和子版块。
+    绕过浏览器 CORS 限制，由本地 Python 服务器代理请求。
+    """
+    if request.method == 'OPTIONS':
+        return '', 200
+
+    url = request.args.get('url', '').strip()
+    if not url:
+        return jsonify({'success': False, 'error': '缺少 url 参数'}), 400
+
+    try:
+        # 使用 urllib 跟随重定向，读取最终 URL
+        req = urllib.request.Request(
+            url,
+            headers={
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) '
+                              'AppleWebKit/537.36 (KHTML, like Gecko) '
+                              'Chrome/124.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            }
+        )
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            final_url = resp.geturl()
+
+        m = re.search(r'reddit\.com/r/([^/?#]+)/comments/([a-z0-9]+)', final_url, re.I)
+        if not m:
+            return jsonify({'success': False, 'error': f'无法从重定向 URL 解析帖子 ID: {final_url[:120]}'}), 400
+
+        return jsonify({'success': True, 'sub': m.group(1), 'id': m.group(2), 'final_url': final_url})
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 @app.route('/analyze', methods=['POST', 'OPTIONS'])
@@ -472,7 +510,7 @@ def analyze():
 
 if __name__ == '__main__':
     print('\n' + '='*52)
-    print('  Reddit GMV — 店铺分析服务器 v1.1')
+    print('  Reddit GMV — 店铺分析服务器 v1.2')
     print('  http://127.0.0.1:5678')
     print()
     print('  平台支持:')
