@@ -915,15 +915,24 @@ function parseUrl(url) {
 }
 
 async function resolveShortUrl(sub, code) {
-  // fetch 短链接 JSON，浏览器自动跟随重定向，response.url 就是最终 URL
-  const res = await fetch(
-    `https://www.reddit.com/r/${sub}/s/${code}.json?raw_json=1`,
-    { headers: { Accept: 'application/json' }, redirect: 'follow' }
+  // Step 1: fetch 短链接（HTML 重定向），拿到 response.url（最终真实 URL）
+  // 短链接加 .json 不被 Reddit 识别，所以先拿 HTML 拿到最终地址
+  const htmlRes = await fetch(
+    `https://www.reddit.com/r/${sub}/s/${code}`,
+    { headers: { Accept: 'text/html,*/*' }, redirect: 'follow' }
   );
-  if (!res.ok) throw new Error('HTTP ' + res.status);
-  // 直接拿重定向后的 JSON 数据
-  const data = await res.json();
-  return data;
+  // response.url 是最终 URL，如 /r/xxx/comments/1p1zuuq/title/
+  const finalUrl = htmlRes.url;
+  const m = finalUrl.match(/reddit\.com\/r\/([^/?#]+)\/comments\/([a-z0-9]+)/i);
+  if (!m) throw new Error(`无法从重定向 URL 中解析帖子 ID（${finalUrl.slice(0,80)}）`);
+
+  // Step 2: 用真实 ID 拉 JSON
+  const jsonRes = await fetch(
+    `https://www.reddit.com/r/${m[1]}/comments/${m[2]}.json?raw_json=1`,
+    { headers: { Accept: 'application/json' } }
+  );
+  if (!jsonRes.ok) throw new Error('HTTP ' + jsonRes.status);
+  return await jsonRes.json();
 }
 
 async function fetchPost() {
