@@ -628,7 +628,7 @@ input[type=number]::placeholder { color: #2a2d3a; font-size: 13px; }
       <div class="section-title">博主追踪分析</div>
       <div class="blogger-input-row">
         <input class="blogger-input" id="bloggerInput"
-          placeholder="输入 Reddit 用户名（如 username，不需要 u/）..."
+          placeholder="用户名 / u/username / reddit.com/user/username 均可..."
           onkeydown="if(event.key==='Enter') analyzeBlogger()">
         <button class="btn-analyze" id="analyzeBtn" onclick="analyzeBlogger()">
           <div class="spinner" id="blogSpinner"></div>
@@ -1288,7 +1288,11 @@ function trackAuthor() {
 //  博主分析
 // ════════════════════════════════════════════════════════════
 async function analyzeBlogger() {
-  const raw = document.getElementById('bloggerInput').value.trim().replace(/^u\//, '');
+  const inputVal = document.getElementById('bloggerInput').value.trim();
+  // 支持三种格式：完整 URL / u/username / 纯用户名
+  const raw = (inputVal.match(/reddit\.com\/user\/([^/?#\s]+)/i)
+            || inputVal.match(/^u\/([^/?#\s]+)/i)
+            || [null, inputVal])[1].replace(/\/$/, '');
   if (!raw) return;
   setBlogLoading(true);
   document.getElementById('blogErr').style.display = 'none';
@@ -1313,7 +1317,7 @@ async function analyzeBlogger() {
       renderBlogger(raw, posts, false);
     }
   } catch(e) {
-    showBlogErr('获取失败，请检查用户名是否正确（不需要加 u/）');
+    showBlogErr('获取失败，请检查用户名是否正确');
   } finally {
     setBlogLoading(false);
   }
