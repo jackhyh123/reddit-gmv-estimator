@@ -582,22 +582,59 @@ async def fetch_reddit_post(sub: str, post_id: str) -> dict:
     raise RuntimeError('全部方案失败；' + ' | '.join(errors))
 
 
+def _reddit_search_user_posts(username: str, limit: int = 100) -> list:
+    """通过全站搜索获取用户帖子（当 submitted 被隐藏时使用）。"""
+    cookies = _get_chrome_cookies()
+    proxies = {'https': 'http://127.0.0.1:7890', 'http': 'http://127.0.0.1:7890'}
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/124.0.0.0 Safari/537.36',
+        'Accept': 'application/json',
+    }
+    resp = _requests.get(
+        'https://www.reddit.com/search.json',
+        params={'q': f'author:{username}', 'sort': 'new', 'limit': min(limit, 100),
+                'raw_json': 1, 'type': 'link'},
+        cookies=cookies,
+        headers=headers,
+        proxies=proxies,
+        timeout=15,
+    )
+    resp.raise_for_status()
+    d = resp.json()
+    return [c['data'] for c in d.get('data', {}).get('children', [])]
+
+
 async def fetch_reddit_user_posts(username: str, limit: int = 100) -> list:
     errors = []
 
-    # 方案1：Chrome 登录 cookies
+    # 方案1：Chrome 登录 cookies（submitted.json）
     try:
         data = _reddit_fetch_with_chrome_cookies(
             f'/user/{username}/submitted.json?limit={limit}&raw_json=1'
         )
-        return [c['data'] for c in data['data']['children']]
+        posts = [c['data'] for c in data['data']['children']]
+        # 如果 submitted 返回空（用户隐藏了帖子历史），自动切换到全站搜索
+        if not posts:
+            try:
+                posts = _reddit_search_user_posts(username, limit)
+                if posts:
+                    print(f'[Reddit] {username} 帖子历史已隐藏，通过搜索获取到 {len(posts)} 条')
+            except Exception as se:
+                errors.append(f'Search fallback: {se}')
+        return posts
     except Exception as e:
         errors.append(f'Chrome cookies: {e}')
 
     # 方案2：OAuth
     try:
         data = _reddit_api_get(f'/user/{username}/submitted', {'raw_json': 1, 'limit': limit})
-        return [c['data'] for c in data['data']['children']]
+        posts = [c['data'] for c in data['data']['children']]
+        if not posts:
+            try:
+                posts = _reddit_search_user_posts(username, limit)
+            except Exception:
+                pass
+        return posts
     except Exception as e:
         errors.append(f'OAuth: {e}')
 
