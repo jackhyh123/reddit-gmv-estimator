@@ -152,6 +152,59 @@ def _reddit_api_get(path: str, params: dict = None) -> dict:
     return resp.json()
 
 
+# ── Chrome Cookies 方案（使用你的 Reddit 登录态） ────────────
+_CHROME_COOKIES = None
+_CHROME_COOKIES_LOADED = False
+
+def _get_chrome_cookies():
+    """延迟加载 Chrome 里的 reddit.com cookies（仅第一次调用时读取）。"""
+    global _CHROME_COOKIES, _CHROME_COOKIES_LOADED
+    if _CHROME_COOKIES_LOADED:
+        return _CHROME_COOKIES
+    _CHROME_COOKIES_LOADED = True
+    try:
+        import browser_cookie3
+        cj = browser_cookie3.chrome(domain_name='reddit.com')
+        # 验证是否有登录 cookie
+        names = {c.name for c in cj}
+        if 'reddit_session' in names or 'token_v2' in names:
+            _CHROME_COOKIES = cj
+            print(f'[Reddit] 已从 Chrome 读取登录态 ({len(names)} cookies)')
+        else:
+            print('[Reddit] Chrome 中未发现 Reddit 登录态')
+    except Exception as e:
+        print(f'[Reddit] 读取 Chrome cookies 失败: {e}')
+    return _CHROME_COOKIES
+
+
+def _reddit_fetch_with_chrome_cookies(path: str) -> dict | list:
+    """
+    带 Chrome Reddit 登录 cookies 请求 www.reddit.com/.../.json
+    path: 如 /user/foo/submitted.json?limit=100&raw_json=1
+    """
+    cookies = _get_chrome_cookies()
+    if cookies is None:
+        raise RuntimeError('NO_CHROME_COOKIES')
+    proxies = {'https': 'http://127.0.0.1:7890', 'http': 'http://127.0.0.1:7890'}
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'Accept': 'application/json',
+    }
+    resp = _requests.get(
+        f'https://www.reddit.com{path}',
+        cookies=cookies,
+        headers=headers,
+        proxies=proxies,
+        timeout=15,
+    )
+    if resp.status_code != 200:
+        raise RuntimeError(f'HTTP {resp.status_code}')
+    text = resp.text
+    if text.lstrip().startswith('<'):
+        raise RuntimeError('HTML returned (blocked)')
+    return json.loads(text)
+
+
 def normalize_text(text: str) -> str:
     """
     清除微店/淘宝常见反爬干扰字符：
@@ -499,33 +552,65 @@ async def _reddit_fetch_via_playwright(api_path: str, timeout: int = 30000) -> s
 
 
 async def fetch_reddit_post(sub: str, post_id: str) -> dict:
-    # 方案1：OAuth API（已配置凭据时最可靠）
+    errors = []
+
+    # 方案1：Chrome 登录 cookies（最可靠，无需额外配置）
+    try:
+        data = _reddit_fetch_with_chrome_cookies(
+            f'/r/{sub}/comments/{post_id}.json?raw_json=1&limit=1'
+        )
+        return data[0]['data']['children'][0]['data']
+    except Exception as e:
+        errors.append(f'Chrome cookies: {e}')
+
+    # 方案2：OAuth API（已配置凭据时）
     try:
         data = _reddit_api_get(f'/r/{sub}/comments/{post_id}', {'raw_json': 1, 'limit': 1})
         return data[0]['data']['children'][0]['data']
-    except RuntimeError as e:
-        if 'NO_CREDENTIALS' not in str(e):
-            raise
-    # 方案2：Playwright
-    path = f'/r/{sub}/comments/{post_id}.json?raw_json=1&limit=1'
-    text = await _reddit_fetch_via_playwright(path)
-    data = json.loads(text)
-    return data[0]['data']['children'][0]['data']
+    except Exception as e:
+        errors.append(f'OAuth: {e}')
+
+    # 方案3：Playwright（慢，最后降级）
+    try:
+        path = f'/r/{sub}/comments/{post_id}.json?raw_json=1&limit=1'
+        text = await _reddit_fetch_via_playwright(path)
+        data = json.loads(text)
+        return data[0]['data']['children'][0]['data']
+    except Exception as e:
+        errors.append(f'Playwright: {e}')
+
+    raise RuntimeError('全部方案失败；' + ' | '.join(errors))
 
 
 async def fetch_reddit_user_posts(username: str, limit: int = 100) -> list:
-    # 方案1：OAuth API
+    errors = []
+
+    # 方案1：Chrome 登录 cookies
+    try:
+        data = _reddit_fetch_with_chrome_cookies(
+            f'/user/{username}/submitted.json?limit={limit}&raw_json=1'
+        )
+        return [c['data'] for c in data['data']['children']]
+    except Exception as e:
+        errors.append(f'Chrome cookies: {e}')
+
+    # 方案2：OAuth
     try:
         data = _reddit_api_get(f'/user/{username}/submitted', {'raw_json': 1, 'limit': limit})
         return [c['data'] for c in data['data']['children']]
-    except RuntimeError as e:
-        if 'NO_CREDENTIALS' not in str(e):
-            raise
-    # 方案2：Playwright
-    path = f'/user/{username}/submitted.json?limit={limit}&raw_json=1'
-    text = await _reddit_fetch_via_playwright(path)
-    data = json.loads(text)
-    return [c['data'] for c in data['data']['children']]
+    except Exception as e:
+        errors.append(f'OAuth: {e}')
+
+    # 方案3：Playwright
+    try:
+        path = f'/user/{username}/submitted.json?limit={limit}&raw_json=1'
+        text = await _reddit_fetch_via_playwright(path)
+        data = json.loads(text)
+        return [c['data'] for c in data['data']['children']]
+    except Exception as e:
+        errors.append(f'Playwright: {e}')
+
+    raise RuntimeError('全部方案失败；' + ' | '.join(errors))
 
 
 # ── 主抓取流程 ──────────────────────────────────────────────
@@ -630,8 +715,9 @@ async def do_scrape(url: str, blogger_cats: dict) -> dict:
 def health():
     return jsonify({
         'status': 'ok',
-        'version': '1.3',
+        'version': '1.4',
         'reddit_oauth': bool(_REDDIT_CREDS.get('client_id')),
+        'reddit_chrome_cookies': _get_chrome_cookies() is not None,
     })
 
 
@@ -719,20 +805,22 @@ def analyze():
 
 if __name__ == '__main__':
     print('\n' + '='*52)
-    print('  Reddit GMV — 店铺分析服务器 v1.3')
+    print('  Reddit GMV — 店铺分析服务器 v1.4')
     print('  http://127.0.0.1:5678')
     print()
     print('  平台支持:')
     print('  微店  ✅ 全自动（无需登录）')
     print('  淘宝  ⚠️  建议在 Chrome 中已登录淘宝')
     print('  1688  ⚠️  移动版自动绕 CAPTCHA')
-    if _REDDIT_CREDS.get('client_id'):
-        print()
-        print('  Reddit ✅ OAuth2 已配置（高可靠抓取）')
+    # Reddit 多路径尝试
+    print()
+    cc = _get_chrome_cookies()
+    if cc:
+        print('  Reddit ✅ 使用 Chrome 登录态抓取（推荐）')
+    elif _REDDIT_CREDS.get('client_id'):
+        print('  Reddit ✅ OAuth2 已配置')
     else:
-        print()
-        print('  Reddit ⚠️  未配置 OAuth（降级用 Playwright）')
-        print('  → 新建 reddit_credentials.json 可大幅提升成功率')
-        print('    详见启动说明中的"Reddit API 配置"')
+        print('  Reddit ⚠️  未检测到可用登录态，将用 Playwright 降级')
+        print('  提示：在 Chrome 中登录 reddit.com 即可自动启用高可靠抓取')
     print('='*52 + '\n')
     app.run(host='127.0.0.1', port=5678, debug=False)
